@@ -1,0 +1,23 @@
+{
+  "versao": 1,
+  "geradoEm": null,
+  "mae": {
+    "owner": "eduardobragamkt",
+    "repo": "git-castaway",
+    "url": "https://github.com/eduardobragamkt/git-castaway",
+    "pagesUrl": "https://eduardobragamkt.github.io/git-castaway/"
+  },
+  "ilhaPrincipal": {
+    "login": "eduardobragamkt",
+    "avatar": "",
+    "url": "https://github.com/eduardobragamkt/git-castaway",
+    "pagesUrl": "https://eduardobragamkt.github.io/git-castaway/",
+    "estrelas": 0,
+    "pushes3d": 0,
+    "energia": "dormindo"
+  },
+  "issuesAbertas": 0,
+  "garrafas": [],
+  "totalForks": 0,
+  "forks": []
+}

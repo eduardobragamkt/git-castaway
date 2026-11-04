@@ -1,0 +1,483 @@
+{
+  "versao": 1,
+  "geradoEm": "2026-11-04T12:00:00Z",
+  "mae": {
+    "owner": "eduardobragamkt",
+    "repo": "git-castaway",
+    "url": "https://github.com/eduardobragamkt/git-castaway",
+    "pagesUrl": "https://eduardobragamkt.github.io/git-castaway/"
+  },
+  "ilhaPrincipal": {
+    "login": "eduardobragamkt",
+    "avatar": "",
+    "url": "https://github.com/eduardobragamkt/git-castaway",
+    "pagesUrl": "https://eduardobragamkt.github.io/git-castaway/",
+    "estrelas": 120,
+    "pushes3d": 7,
+    "energia": "trabalhando"
+  },
+  "issuesAbertas": 3,
+  "garrafas": [
+    {
+      "numero": 2,
+      "id": "push-force",
+      "pt": "Fiz push --force e acordei aqui.",
+      "en": "I ran push --force and woke up here."
+    },
+    {
+      "numero": 8,
+      "id": "minha-ilha",
+      "pt": "Funciona na minha ilha.",
+      "en": "Works on my island."
+    },
+    {
+      "numero": 20,
+      "id": "vim",
+      "pt": "Socorro! Alguém sabe como sair do Vim?",
+      "en": "Help! Does anyone know how to exit Vim?"
+    }
+  ],
+  "totalForks": 40,
+  "forks": [
+    {
+      "login": "ilha-demo-01",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 0,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-02",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 1,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-03",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 3,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-04",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 5,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-05",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 10,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-06",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 25,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-07",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 50,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-08",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 100,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-09",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 0,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-10",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 1,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-11",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 3,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-12",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 5,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-13",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 10,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-14",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 25,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-15",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 50,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-16",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 100,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-17",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 0,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-18",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 1,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-19",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 3,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-20",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 5,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-21",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 10,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-22",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 25,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-23",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 50,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-24",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 100,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-25",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 0,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-26",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 1,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-27",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 3,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-28",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 5,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-29",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 10,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-30",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 25,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-31",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 50,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-32",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 100,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-33",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 0,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-34",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 1,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-35",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 3,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-36",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 5,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-37",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 10,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    },
+    {
+      "login": "ilha-demo-38",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 25,
+      "pushes3d": 3,
+      "energia": "pescando"
+    },
+    {
+      "login": "ilha-demo-39",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 50,
+      "pushes3d": 9,
+      "energia": "trabalhando"
+    },
+    {
+      "login": "ilha-demo-40",
+      "avatar": "",
+      "repo": "git-castaway",
+      "url": "https://github.com/eduardobragamkt/git-castaway",
+      "pagesUrl": null,
+      "criadoEm": "2026-11-01T00:00:00Z",
+      "estrelas": 100,
+      "pushes3d": 0,
+      "energia": "dormindo"
+    }
+  ]
+}

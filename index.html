@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Git Castaway</title>
+    <meta name="description" content="Um arquipélago vivo em pixel art movido pela atividade pública do GitHub." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <canvas id="mar" role="img" aria-label="Oceano com ilhas de pixel art, uma para cada participante"></canvas>
+
+    <header id="hud">
+      <h1>Git Castaway</h1>
+      <p id="modo"></p>
+      <ul id="contadores">
+        <li title="Stars">★ <span id="estrelas">0</span></li>
+        <li id="contador-issues" title="Issues">✉ <span id="issues">0</span></li>
+        <li id="contador-forks" title="Forks">⑂ <span id="forks">0</span></li>
+      </ul>
+    </header>
+
+    <nav id="acoes">
+      <button id="voltar" type="button" hidden></button>
+      <a id="mandar-garrafa" target="_blank" rel="noopener noreferrer"></a>
+      <a id="criar-ilha" target="_blank" rel="noopener noreferrer"></a>
+    </nav>
+
+    <div id="balao" role="status" hidden></div>
+    <aside id="cartao" hidden></aside>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

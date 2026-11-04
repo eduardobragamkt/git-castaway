@@ -1,0 +1,55 @@
+name: Sync Island
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [sync-island]
+  watch:
+    types: [started]
+  fork:
+  issues:
+    types: [opened, edited, closed, reopened, deleted]
+
+permissions:
+  contents: write
+  issues: read
+
+# Em rajadas de eventos, fica uma execução rodando e no máximo uma na fila.
+concurrency:
+  group: sync-island
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # Forks leem o JSON da Mãe, então o workflow só roda no repositório central.
+    if: github.repository == 'eduardobragamkt/git-castaway'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Testar regras
+        run: npm test
+
+      - name: Atualizar arquipelago.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/update-data.js
+
+      - name: Publicar mudanças
+        run: |
+          if git diff --quiet -- data/arquipelago.json; then
+            echo "Nada para publicar."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/arquipelago.json
+          git commit -m "chore(ilha): sincroniza o arquipélago"
+          git pull --rebase origin main
+          git push origin HEAD:main
