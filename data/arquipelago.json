@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "geradoEm": "2026-11-04T23:56:41.346Z",
+  "geradoEm": "2026-11-04T23:57:06.966Z",
   "mae": {
     "owner": "eduardobragamkt",
     "repo": "git-castaway",
@@ -16,15 +16,8 @@
     "pushes3d": 0,
     "energia": "dormindo"
   },
-  "issuesAbertas": 1,
-  "garrafas": [
-    {
-      "numero": 1,
-      "id": "minha-ilha",
-      "pt": "Funciona na minha ilha.",
-      "en": "Works on my island."
-    }
-  ],
+  "issuesAbertas": 0,
+  "garrafas": [],
   "totalForks": 0,
   "forks": []
 }
