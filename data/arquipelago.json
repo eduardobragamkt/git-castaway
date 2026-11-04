@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "geradoEm": null,
+  "geradoEm": "2026-11-04T23:55:58.461Z",
   "mae": {
     "owner": "eduardobragamkt",
     "repo": "git-castaway",
@@ -9,7 +9,7 @@
   },
   "ilhaPrincipal": {
     "login": "eduardobragamkt",
-    "avatar": "",
+    "avatar": "https://avatars.githubusercontent.com/u/267752846?v=4",
     "url": "https://github.com/eduardobragamkt/git-castaway",
     "pagesUrl": "https://eduardobragamkt.github.io/git-castaway/",
     "estrelas": 0,
