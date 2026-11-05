@@ -15,6 +15,15 @@ Personagem, arte e código são originais. O projeto é uma homenagem ao gênero
 | [Mandar uma garrafa](https://github.com/eduardobragamkt/git-castaway/issues/new?template=garrafa.yml) | O náufrago recolhe a garrafa na praia e lê a mensagem escolhida. |
 | [Dar um fork](https://github.com/eduardobragamkt/git-castaway/fork) | Nasce uma nova ilha no arquipélago. |
 
+## Como explorar
+
+- **Mapa do arquipélago:** arraste para navegar e clique em uma ilha para entrar na cena dela.
+- **Cena da ilha:** um quadro de tela cheia que segue o horário local do visitante, do amanhecer à noite.
+- **Personagem:** clique no náufrago para ver energia, estrelas, próxima melhoria e o perfil público do dono da ilha no GitHub.
+- **Zoom:** use o menu da tela, a roda do mouse, o gesto de pinça ou as teclas `+`, `-` e `0`.
+
+Sem mexer no mouse por alguns segundos, os painéis somem e sobra só a ilha.
+
 ## Sua própria ilha
 
 1. Dê um fork neste repositório.
@@ -41,14 +50,25 @@ npm test
 npm run dev
 ```
 
-Em `http://localhost:4173`, adicione `?dados=test/fixtures/demo.json` para ver um arquipélago de exemplo ou `?ilha=login` para testar o Modo Solo.
+Parâmetros de teste em `http://localhost:4173`:
+
+| Parâmetro | Efeito |
+| --- | --- |
+| `?dados=test/fixtures/demo.json` | Carrega um arquipélago de exemplo |
+| `?ilha=login` | Abre o Modo Solo daquele usuário |
+| `?visao=cena` ou `?visao=mapa` | Força a visão inicial |
+| `?hora=21` | Fixa o horário do céu e da luz |
+| `?cena=fish` | Repete uma atividade do náufrago (veja `js/scene/activities.js`) |
+
+Os parâmetros `dados`, `visao`, `hora` e `cena` só funcionam em ambiente local.
 
 ```text
 data/arquipelago.json        estado do jogo, gerado pelo workflow
 data/garrafas.json           catálogo de mensagens pré-aprovadas
 scripts/update-data.js       coleta os dados na API do GitHub
 .github/workflows/           sincronização por cron e por eventos
-js/                          motor em Canvas: ilhas, náufrago, câmera e arte
+js/                          mapa, câmera, zoom e ciclo de 24 horas
+js/scene/                    cena de tela cheia: céu, mar, esqueleto e atividades
 ```
 
 ## Limites conhecidos

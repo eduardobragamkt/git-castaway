@@ -2,17 +2,7 @@
 
 import { VARIANTS, characterSprite, decorationSprites, drawLine, hashString, islandArt } from './art.js';
 import { Castaway } from './castaway.js';
-
-// Melhorias conquistadas por estrelas. x e y são frações dos raios da ilha.
-export const STAR_UPGRADES = [
-  { stars: 1, sprite: 'caixote', x: 0.42, y: 0.28 },
-  { stars: 3, sprite: 'barril', x: 0.6, y: 0.02 },
-  { stars: 5, sprite: 'fogueira', x: -0.18, y: 0.5 },
-  { stars: 10, sprite: 'bandeira', x: -0.5, y: -0.28 },
-  { stars: 25, sprite: 'cabana', x: 0.1, y: -0.42 },
-  { stars: 50, sprite: 'jangada', x: -1.08, y: 0.85 },
-  { stars: 100, sprite: 'farol', x: -0.86, y: -0.35 },
-];
+import { STAR_UPGRADES } from './upgrades.js';
 
 const ENERGY_COLORS = { dormindo: '#9aa3b2', pescando: '#f2c94c', trabalhando: '#57d36b' };
 
@@ -62,6 +52,11 @@ export class Island {
 
   castawayWorldPosition() {
     return { x: this.x + this.castaway.x, y: this.y + this.castaway.y };
+  }
+
+  hitsCastaway(worldX, worldY, tolerance) {
+    const { x, y } = this.castawayWorldPosition();
+    return Math.abs(worldX - x) <= tolerance && worldY <= y + tolerance / 2 && worldY >= y - 18 - tolerance / 2;
   }
 
   showBottle() {

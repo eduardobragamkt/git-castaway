@@ -14,6 +14,23 @@ export function isLocalHost(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
 }
 
+// Perfil público do dono da ilha no GitHub.
+export function profileUrl(login) {
+  return LOGIN_PATTERN.test(login ?? '') ? `https://github.com/${login}` : null;
+}
+
+// Controles de teste de cenas e horários. Só existem em ambiente local.
+export function devOptions(location) {
+  if (!isLocalHost(location.hostname)) return {};
+  const params = new URLSearchParams(location.search);
+  const hour = Number(params.get('hora'));
+  return {
+    activity: params.get('cena'),
+    hour: params.has('hora') && Number.isFinite(hour) ? hour : null,
+    view: params.get('visao'),
+  };
+}
+
 // A URL define o modo: a Mãe mostra o arquipélago e um fork mostra só a própria ilha.
 export function resolveMode(location, motherOwner = MOTHER_OWNER) {
   const requested = new URLSearchParams(location.search).get('ilha');

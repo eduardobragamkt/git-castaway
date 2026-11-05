@@ -13,7 +13,7 @@ export function hashString(text) {
   return hash >>> 0;
 }
 
-function seededRandom(seed) {
+export function seededRandom(seed) {
   let state = seed >>> 0;
   return () => {
     state = (state + 0x6d2b79f5) >>> 0;
@@ -23,7 +23,7 @@ function seededRandom(seed) {
   };
 }
 
-function makeCanvas(width, height) {
+export function makeCanvas(width, height) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;

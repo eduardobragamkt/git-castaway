@@ -29,8 +29,15 @@
       <a id="criar-ilha" target="_blank" rel="noopener noreferrer"></a>
     </nav>
 
+    <nav id="zoom">
+      <button id="zoom-mais" type="button">+</button>
+      <output id="zoom-valor">100%</output>
+      <button id="zoom-menos" type="button">−</button>
+      <button id="zoom-ajustar" type="button">⤢</button>
+    </nav>
+
     <div id="balao" role="status" hidden></div>
-    <aside id="cartao" hidden></aside>
+    <aside id="cartao" role="dialog" aria-labelledby="cartao-titulo" tabindex="-1" hidden></aside>
 
     <script type="module" src="js/main.js"></script>
   </body>
