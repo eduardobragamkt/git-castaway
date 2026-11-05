@@ -26,6 +26,7 @@ export function devOptions(location) {
   const hour = Number(params.get('hora'));
   return {
     activity: params.get('cena'),
+    variant: params.get('variante'),
     hour: params.has('hora') && Number.isFinite(hour) ? hour : null,
     view: params.get('visao'),
   };

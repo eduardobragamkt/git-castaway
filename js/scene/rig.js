@@ -89,6 +89,14 @@ function paintHead(g, facing, mood, blink, time) {
     dot(9, 5, '#f4ecd8', 2, 2);
     dot(7, 5, OUTLINE, 1, 2);
     dot(10, 5, OUTLINE, 1, 2);
+  } else if (mood === 'dizzy') {
+    for (const eye of [6, 9]) {
+      dot(eye, 5, OUTLINE);
+      dot(eye + 2, 5, OUTLINE);
+      dot(eye + 1, 6, OUTLINE);
+      dot(eye, 7, OUTLINE);
+      dot(eye + 2, 7, OUTLINE);
+    }
   } else if (mood === 'sleepy') {
     dot(6, 6, OUTLINE, 2, 1);
     dot(9, 6, OUTLINE, 2, 1);

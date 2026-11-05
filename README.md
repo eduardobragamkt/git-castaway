@@ -58,9 +58,10 @@ Parâmetros de teste em `http://localhost:4173`:
 | `?ilha=login` | Abre o Modo Solo daquele usuário |
 | `?visao=cena` ou `?visao=mapa` | Força a visão inicial |
 | `?hora=21` | Fixa o horário do céu e da luz |
-| `?cena=fish` | Repete uma atividade do náufrago (veja `js/scene/activities.js`) |
+| `?cena=coconut` | Repete uma atividade do náufrago (veja `js/scene/activities.js`) |
+| `?cena=coconut&variante=stone` | Repete uma versão específica da atividade |
 
-Os parâmetros `dados`, `visao`, `hora` e `cena` só funcionam em ambiente local.
+Os parâmetros `dados`, `visao`, `hora`, `cena` e `variante` só funcionam em ambiente local.
 
 ```text
 data/arquipelago.json        estado do jogo, gerado pelo workflow

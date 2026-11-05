@@ -437,6 +437,7 @@ function buildScene(spec) {
     hourFn: hourNow,
     distantIslets: appData.totalForks,
     fixedActivity: dev.activity && ACTIVITIES[dev.activity] ? dev.activity : null,
+    fixedVariant: dev.variant ?? null,
   });
 }
 

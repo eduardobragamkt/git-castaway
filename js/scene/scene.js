@@ -18,7 +18,7 @@ const CASTLE_SLOTS = [
 ];
 
 export class Scene {
-  constructor(spec, { hourFn, distantIslets = 0, fixedActivity = null }) {
+  constructor(spec, { hourFn, distantIslets = 0, fixedActivity = null, fixedVariant = null }) {
     this.spec = spec;
     this.hourFn = hourFn;
     this.seed = hashString(spec.login || 'ilha');
@@ -46,6 +46,7 @@ export class Scene {
       night: () => isNight(this.hourFn()),
       onEvent: (event) => this.handleEvent(event),
       fixedActivity,
+      fixedVariant,
     });
     this.buffer = null;
     this.foreground = null;
@@ -57,9 +58,49 @@ export class Scene {
     this.commitTiles = Math.min(spec.commits3d, 24);
     this.tileFlash = 0;
     this.falling = [];
+    this.groundCoconut = null;
+    this.stone = null;
+    this.crab = null;
+    this.gull = null;
+    this.wave = null;
     this.footprints = [];
-    this.lastStepPhase = 0;
     this.drop = null;
+  }
+
+  palmCrown() {
+    const palm = this.palms[0];
+    const frame = palm.frames[0];
+    return { x: palm.x + frame.topX - frame.baseX, y: palm.y + frame.topY - frame.baseY + 8 };
+  }
+
+  headPoint() {
+    return { x: this.actor.x, y: this.actor.y - this.actor.lift - 42 };
+  }
+
+  spawnCoconut(targetX, groundY, staysOnGround) {
+    const crown = this.palmCrown();
+    this.falling.push({ x: crown.x, y: crown.y, vy: 0, targetX, groundY, staysOnGround });
+  }
+
+  spawnCrab() {
+    const { x, y } = this.actor;
+    const startX = Math.min(158, x + 90);
+    const seconds = 1.8;
+    this.crab = { x: startX, y: y + 4, targetX: x + 12, speed: (startX - x - 12) / seconds, fleeing: false, exitX: startX };
+  }
+
+  spawnGull() {
+    const { x, y, facing } = this.actor;
+    const startX = this.view.left - 24;
+    this.gull = {
+      x: startX,
+      y: -110,
+      targetX: x + facing * 7,
+      targetY: y - 42,
+      speedX: (x + facing * 7 - startX) / 1.3,
+      speedY: (y - 42 + 110) / 1.3,
+      carrying: false,
+    };
   }
 
   handleEvent(event) {
@@ -67,15 +108,17 @@ export class Scene {
     else if (event === 'castle') this.castles = Math.min(CASTLE_SLOTS.length, this.castles + 1);
     else if (event === 'commit') this.tileFlash = 1.2;
     else if (event === 'shootingStar') this.backdrop.launchShootingStar(this.view);
-    else if (event === 'coconut') {
-      const palm = this.palms[0];
-      const frame = palm.frames[0];
-      this.falling.push({
-        x: palm.x + frame.topX - frame.baseX,
-        y: palm.y + frame.topY - frame.baseY + 8,
-        vy: 0,
-        groundY: this.actor.y - 2,
-      });
+    else if (event === 'coconut') this.spawnCoconut(this.actor.x + this.actor.facing * 12, this.actor.y - 2, true);
+    else if (event === 'coconutHead') this.spawnCoconut(this.actor.x, this.actor.y - 46, false);
+    else if (event === 'takeCoconut') this.groundCoconut = null;
+    else if (event === 'stoneThrow') this.stone = { time: 0, duration: 1.3 };
+    else if (event === 'crab') this.spawnCrab();
+    else if (event === 'crabFlee' && this.crab) this.crab.fleeing = true;
+    else if (event === 'gull') this.spawnGull();
+    else if (event === 'gullFlee' && this.gull) this.gull.carrying = true;
+    else if (event === 'waveWipe' && this.castles > 0) {
+      this.wave = { x: CASTLE_SLOTS[this.castles - 1].x, time: 0 };
+      this.castles -= 1;
     }
   }
 
@@ -101,11 +144,12 @@ export class Scene {
 
   // Ponto acima da cabeça, usado para ancorar o balão e o pop-up.
   anchor() {
-    return { x: this.actor.x, y: this.actor.y - 48 };
+    return { x: this.actor.x, y: this.actor.y - this.actor.lift - 48 };
   }
 
   hitsCastaway(worldX, worldY, tolerance) {
-    const { x, y } = this.actor;
+    const { x, lift } = this.actor;
+    const y = this.actor.y - lift;
     return Math.abs(worldX - x) <= Math.max(16, tolerance) && worldY <= y + 5 && worldY >= y - 44 - Math.max(0, tolerance - 16);
   }
 
@@ -126,13 +170,48 @@ export class Scene {
     this.falling = this.falling.filter((item) => {
       item.vy += 260 * dt;
       item.y += item.vy * dt;
-      return item.y < item.groundY;
+      item.x += (item.targetX - item.x) * Math.min(1, dt * 5);
+      if (item.y < item.groundY) return true;
+      if (item.staysOnGround) this.groundCoconut = { x: item.targetX, y: item.groundY };
+      return false;
     });
+    this.updateCritters(dt);
     if (this.drop) {
       if (this.drop.height > 0) this.drop.height = Math.max(0, this.drop.height - 42 * dt);
       else {
         this.drop.landed += dt;
         if (this.drop.landed > 1.1) this.drop = null;
+      }
+    }
+  }
+
+  updateCritters(dt) {
+    if (this.stone) {
+      this.stone.time += dt;
+      if (this.stone.time >= this.stone.duration) this.stone = null;
+    }
+    if (this.wave) {
+      this.wave.time += dt;
+      if (this.wave.time >= 1.2) this.wave = null;
+    }
+    if (this.crab) {
+      const { crab } = this;
+      if (crab.fleeing) {
+        crab.x += crab.speed * 1.6 * dt;
+        if (crab.x >= crab.exitX) this.crab = null;
+      } else {
+        crab.x = Math.max(crab.targetX, crab.x - crab.speed * dt);
+      }
+    }
+    if (this.gull) {
+      const { gull } = this;
+      if (gull.carrying) {
+        gull.x += 150 * dt;
+        gull.y -= 70 * dt;
+        if (gull.y < this.view.top - 40) this.gull = null;
+      } else {
+        gull.x = Math.min(gull.targetX, gull.x + gull.speedX * dt);
+        gull.y = Math.min(gull.targetY, gull.y + gull.speedY * dt);
       }
     }
   }
@@ -293,21 +372,137 @@ export class Scene {
     for (const item of this.falling) {
       this.drawCoconut(g, item.x, item.y);
     }
+    if (this.groundCoconut) this.drawCoconut(g, this.groundCoconut.x, this.groundCoconut.y);
+    if (this.stone) this.drawStone(g);
+    if (this.crab) this.drawCrab(g);
+    if (this.wave) this.drawWave(g);
+    if (this.gull) this.drawGull(g);
     if (this.bottleVisible) this.drawBottle(g);
     if (this.drop) this.drawDrop(g);
   }
 
-  drawActor(g) {
+  drawActor(g, palette) {
     const { actor, view, time } = this;
     const x = Math.round(actor.x) - view.left;
-    const y = Math.round(actor.y) - view.top;
-    g.fillStyle = 'rgba(70, 45, 20, 0.3)';
-    g.fillRect(x - 10, y - 1, 20, 2);
-    g.fillRect(x - 8, y + 1, 16, 1);
+    const groundY = Math.round(actor.y) - view.top;
+    const y = groundY - Math.round(actor.lift);
+    const inSea = actor.x > 154;
+    if (!inSea) {
+      g.fillStyle = 'rgba(70, 45, 20, 0.3)';
+      g.fillRect(x - 10, groundY - 1, 20, 2);
+      g.fillRect(x - 8, groundY + 1, 16, 1);
+    }
     const blink = time % 3.7 < 0.13;
+    // No mar, as pernas são cortadas na linha d'água, e a água real aparece por baixo.
+    g.save();
+    if (inSea) {
+      g.beginPath();
+      g.rect(0, 0, view.w, groundY - 7);
+      g.clip();
+    }
     const joints = drawRig(g, x, y, actor.facing, actor.pose, { mood: actor.mood, blink, time });
+    g.restore();
     this.drawItem(g, joints);
     this.drawEffect(g, joints);
+    if (inSea) this.drawRipples(g, x, groundY, palette);
+  }
+
+  drawRipples(g, x, y, palette) {
+    const ripple = Math.round(Math.sin(this.time * 3) * 2);
+    g.fillStyle = palette.cap;
+    g.fillRect(x - 11 - ripple, y - 7, 22 + ripple * 2, 1);
+    g.fillRect(x - 15 + ripple, y - 4, 30, 1);
+  }
+
+  drawStone(g) {
+    const { time, duration } = this.stone;
+    const t = time / duration;
+    const crown = this.palmCrown();
+    const head = this.headPoint();
+    const startX = this.actor.x + this.actor.facing * 8;
+    const startY = this.actor.y - 34;
+    let x;
+    let y;
+    if (t < 0.5) {
+      const up = t / 0.5;
+      x = startX + (crown.x - startX) * up;
+      y = startY + (crown.y - startY) * (1 - (1 - up) ** 2);
+    } else {
+      const down = (t - 0.5) / 0.5;
+      x = crown.x + (head.x - crown.x) * down;
+      y = crown.y + (head.y - crown.y) * down ** 2;
+    }
+    const left = Math.round(x - this.view.left);
+    const top = Math.round(y - this.view.top);
+    g.fillStyle = '#231a2b';
+    g.fillRect(left - 2, top - 2, 5, 5);
+    g.fillStyle = '#918f9c';
+    g.fillRect(left - 1, top - 1, 3, 3);
+  }
+
+  drawCrab(g) {
+    const { crab, time } = this;
+    const x = Math.round(crab.x) - this.view.left;
+    const y = Math.round(crab.y) - this.view.top;
+    const step = Math.floor(time * 12) % 2;
+    const rect = (px, py, w, h, color) => {
+      g.fillStyle = color;
+      g.fillRect(x + px, y + py, w, h);
+    };
+    rect(-6, -5, 12, 6, '#231a2b');
+    rect(-5, -4, 10, 4, '#d84f3f');
+    rect(-4, -4, 8, 1, '#ef7a62');
+    rect(-3, -7, 1, 2, '#231a2b');
+    rect(2, -7, 1, 2, '#231a2b');
+    rect(-4, -8, 2, 2, '#f4ecd8');
+    rect(2, -8, 2, 2, '#f4ecd8');
+    rect(-9, -5 - step, 3, 3, '#d84f3f');
+    rect(6, -5 - (1 - step), 3, 3, '#d84f3f');
+    for (const px of [-5, -2, 1, 4]) rect(px, 1, 1, 1 + ((px + step) & 1), '#a93a2f');
+  }
+
+  drawGull(g) {
+    const { gull, time } = this;
+    const x = Math.round(gull.x) - this.view.left;
+    const y = Math.round(gull.y) - this.view.top;
+    const up = Math.sin(time * 16) > 0;
+    const rect = (px, py, w, h, color) => {
+      g.fillStyle = color;
+      g.fillRect(x + px, y + py, w, h);
+    };
+    rect(-7, -2, 14, 6, '#231a2b');
+    rect(-6, -1, 12, 4, '#f4f6ff');
+    rect(6, 0, 3, 2, '#ea9a3a');
+    rect(4, -1, 1, 1, '#231a2b');
+    if (up) {
+      rect(-5, -7, 9, 5, '#231a2b');
+      rect(-4, -6, 7, 4, '#c7d3e4');
+    } else {
+      rect(-5, 2, 9, 5, '#231a2b');
+      rect(-4, 3, 7, 3, '#c7d3e4');
+    }
+    if (gull.carrying) {
+      rect(-5, 5, 10, 5, '#231a2b');
+      rect(-4, 6, 8, 3, '#7fd0e8');
+    }
+  }
+
+  drawWave(g) {
+    const { x, time } = this.wave;
+    const t = time / 1.2;
+    const reach = Math.sin(t * Math.PI);
+    const left = x - this.view.left;
+    const bottom = 60 - this.view.top;
+    const height = Math.round(reach * 13);
+    for (let dx = -22; dx <= 22; dx += 1) {
+      const fade = 1 - Math.abs(dx) / 24;
+      const columnHeight = Math.round(height * fade);
+      if (columnHeight <= 0) continue;
+      g.fillStyle = '#7fcfdc';
+      g.fillRect(left + dx, bottom - columnHeight, 1, columnHeight);
+      g.fillStyle = '#f2fbf6';
+      g.fillRect(left + dx, bottom - columnHeight, 1, 1 + ((dx & 3) === 0 ? 1 : 0));
+    }
   }
 
   drawItem(g, joints) {
@@ -357,6 +552,35 @@ export class Scene {
     if (actor.item === 'stick') {
       line(hand.x, hand.y, hand.x + f * 7, hand.y - 7, '#54331f');
     }
+    if (actor.item === 'boot') {
+      const y = hand.y - 3 + Math.round(Math.sin(time * 7));
+      line(hand.x, hand.y - 8, hand.x, y, '#f4ecd8');
+      rect(hand.x - 5, y, 8, 9, '#231a2b');
+      rect(hand.x - 5, y + 6, 13, 5, '#231a2b');
+      rect(hand.x - 4, y + 1, 6, 8, '#6f4a2a');
+      rect(hand.x - 4, y + 7, 11, 3, '#54331f');
+    }
+    if (actor.item === 'hook') {
+      line(hand.x, hand.y - 8, hand.x, hand.y + 5, '#f4ecd8');
+      rect(hand.x, hand.y + 5, 3, 1, '#a09eaa');
+      rect(hand.x + 3, hand.y + 3, 1, 3, '#a09eaa');
+    }
+    if (actor.item === 'stone') {
+      rect(hand.x - 2, hand.y - 2, 5, 5, '#231a2b');
+      rect(hand.x - 1, hand.y - 1, 3, 3, '#918f9c');
+    }
+    if (actor.item === 'cooking') {
+      const tipX = hand.x + f * 18;
+      const tipY = hand.y - 3;
+      line(hand.x, hand.y, tipX, tipY, '#54331f');
+      rect(tipX - 5, tipY - 3, 10, 5, '#231a2b');
+      rect(tipX - 4, tipY - 2, 8, 3, '#d98a4a');
+      if (Math.floor(time * 2) % 2 === 0) rect(tipX, tipY - 8, 1, 3, 'rgba(244, 236, 216, 0.7)');
+    }
+    if (actor.item === 'cooked') {
+      rect(hand.x - 5, hand.y - 4, 10, 5, '#231a2b');
+      rect(hand.x - 4, hand.y - 3, 8, 3, '#b8682e');
+    }
     if (actor.item === 'coconut') {
       this.drawCoconut(g, hand.x + view.left, hand.y - 2 + view.top);
     }
@@ -400,6 +624,39 @@ export class Scene {
         g.fillRect(x - 2, y + 4, 3, 2);
       }
       g.globalAlpha = 1;
+    }
+    if (actor.effect === 'stars') {
+      for (let i = 0; i < 3; i += 1) {
+        const angle = time * 5 + (i * Math.PI * 2) / 3;
+        const x = Math.round(head.x + Math.cos(angle) * 10);
+        const y = Math.round(head.y - 11 + Math.sin(angle) * 3);
+        g.fillStyle = '#ffe37a';
+        g.fillRect(x - 1, y, 3, 1);
+        g.fillRect(x, y - 1, 1, 3);
+      }
+    }
+    if (actor.effect === 'sweat') {
+      const drop = (time * 1.6) % 1;
+      const side = actor.facing * -8;
+      g.globalAlpha = 1 - drop;
+      g.fillStyle = '#8dd3e8';
+      g.fillRect(Math.round(head.x + side), Math.round(head.y - 5 + drop * 12), 2, 3);
+      g.globalAlpha = 1;
+    }
+    if (actor.effect === 'angry') {
+      const puff = Math.floor(time * 4) % 2;
+      g.fillStyle = '#d84f3f';
+      g.fillRect(Math.round(head.x) + 6, Math.round(head.y) - 12 - puff, 5, 1);
+      g.fillRect(Math.round(head.x) + 8, Math.round(head.y) - 14 - puff, 1, 5);
+    }
+    if (actor.effect === 'splash') {
+      g.fillStyle = '#d5f4f2';
+      for (let i = 0; i < 5; i += 1) {
+        const rise = (time * 1.5 + i * 0.21) % 1;
+        const x = Math.round(head.x + (i - 2) * 8);
+        const y = Math.round(head.y + 28 - Math.sin(rise * Math.PI) * 14);
+        g.fillRect(x, y, 2, 2);
+      }
     }
     if (actor.mood === 'surprised') {
       g.fillStyle = '#ffffff';
