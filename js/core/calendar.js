@@ -30,16 +30,16 @@ function carnivalTuesday(year) {
 export function holidayOn(date) {
   const month = date.getMonth() + 1;
   const day = date.getDate();
-  if ((month === 12 && day >= 29) || (month === 1 && day === 1)) return 'anoNovo';
-  if (month === 12 && day >= 23 && day <= 25) return 'natal';
+  if ((month === 12 && day >= 29) || (month === 1 && day === 1)) return 'newYear';
+  if (month === 12 && day >= 23 && day <= 25) return 'christmas';
   if (month === 10 && day >= 29) return 'halloween';
-  if (month === 3 && day >= 15 && day <= 17) return 'saoPatricio';
-  if (month === 6 && day >= 13 && day <= 29) return 'festaJunina';
-  if (month === 7 && day >= 3 && day <= 5) return 'independencia';
+  if (month === 3 && day >= 15 && day <= 17) return 'stPatricks';
+  if (month === 6 && day >= 13 && day <= 29) return 'juneFestival';
+  if (month === 7 && day >= 3 && day <= 5) return 'independenceDay';
   const tuesday = carnivalTuesday(date.getFullYear());
   const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const daysBefore = Math.round((tuesday - today) / DAY_MS);
-  if (daysBefore >= 0 && daysBefore <= 3) return 'carnaval';
+  if (daysBefore >= 0 && daysBefore <= 3) return 'carnival';
   return null;
 }
 
@@ -54,10 +54,10 @@ function hash(value) {
 export function weatherAt(seed, date) {
   const hourIndex = Math.floor(date.getTime() / (60 * 60 * 1000));
   const roll = hash(hourIndex + seed) % 100;
-  if (roll < 14) return 'chuva';
+  if (roll < 14) return 'rain';
   const hour = date.getHours();
-  if (hour >= 11 && hour <= 15 && roll < 50) return 'calor';
-  return 'limpo';
+  if (hour >= 11 && hour <= 15 && roll < 50) return 'heat';
+  return 'clear';
 }
 
 // De 0 (maré baixa) a 1 (maré alta), com o período real de cerca de 12,4 horas.
@@ -87,14 +87,15 @@ export function isAnniversary(createdAt, now = new Date()) {
 }
 
 // Marcos reais do repositório, no lugar de capítulos fixos. Cada navegador vê cada marco
-// uma vez, e o aniversário uma vez por ano.
+// uma vez, e o aniversário uma vez por ano. Os ids ficam salvos nos navegadores dos visitantes:
+// trocá-los faria cada marco ser comemorado de novo.
 export function pendingMilestones(island, { forks = 0 } = {}, seen = [], now = new Date()) {
   const reached = [];
-  if (island.estrelas >= 1) reached.push('primeiraEstrela');
-  if (island.estrelas >= 10) reached.push('dezEstrelas');
-  if (island.estrelas >= 100) reached.push('cemEstrelas');
-  if (island.principal && forks >= 1) reached.push('primeiroFork');
+  if (island.stars >= 1) reached.push('primeiraEstrela');
+  if (island.stars >= 10) reached.push('dezEstrelas');
+  if (island.stars >= 100) reached.push('cemEstrelas');
+  if (island.isMain && forks >= 1) reached.push('primeiroFork');
   if (island.commits3d >= 10) reached.push('dezCommits');
-  if (isAnniversary(island.criadoEm, now)) reached.push(`aniversario${now.getFullYear()}`);
+  if (isAnniversary(island.createdAt, now)) reached.push(`aniversario${now.getFullYear()}`);
   return reached.filter((milestone) => !seen.includes(milestone));
 }

@@ -9,9 +9,9 @@
   --accent-hover: #f2c94c;
   --gold: #f2c94c;
   --ocean: #1b6a8a;
-  --energy-dormindo: #9aa3b2;
-  --energy-pescando: #f2c94c;
-  --energy-trabalhando: #57d36b;
+  --energy-sleeping: #9aa3b2;
+  --energy-fishing: #f2c94c;
+  --energy-working: #57d36b;
 }
 
 * {
@@ -32,7 +32,7 @@ body {
   display: none !important;
 }
 
-#mar {
+#ocean {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -42,14 +42,14 @@ body {
   image-rendering: pixelated;
 }
 
-#mar.arrastando {
+#ocean.dragging {
   cursor: grabbing;
 }
 
 #hud,
-#acoes,
+#actions,
 #zoom,
-#cartao {
+#island-card {
   position: fixed;
   background: var(--panel);
   border: 2px solid var(--panel-edge);
@@ -57,19 +57,19 @@ body {
 }
 
 #hud,
-#acoes,
+#actions,
 #zoom {
   transition: opacity 0.5s;
 }
 
-body.ocioso #hud,
-body.ocioso #acoes,
-body.ocioso #zoom {
+body.idle #hud,
+body.idle #actions,
+body.idle #zoom {
   opacity: 0;
   pointer-events: none;
 }
 
-body.ocioso #mar {
+body.idle #ocean {
   cursor: none;
 }
 
@@ -94,20 +94,20 @@ body.ocioso #mar {
   overflow-wrap: anywhere;
 }
 
-#abertura {
+#intro {
   position: fixed;
   inset: 0;
   z-index: 15;
   pointer-events: none;
 }
 
-#abertura-cortina {
+#intro-curtain {
   position: absolute;
   inset: 0;
   background: #05060f;
 }
 
-#abertura-terminal {
+#intro-terminal {
   position: absolute;
   bottom: 9%;
   left: 5%;
@@ -121,17 +121,17 @@ body.ocioso #mar {
   color: var(--gold);
 }
 
-.abertura-linha {
+.intro-line {
   min-height: 1.45em;
   overflow-wrap: anywhere;
   transition: opacity 0.2s;
 }
 
-.abertura-linha.anterior {
+.intro-line.previous {
   opacity: 0.45;
 }
 
-.abertura-linha.atual::after {
+.intro-line.current::after {
   content: '';
   display: inline-block;
   width: 0.5em;
@@ -141,7 +141,7 @@ body.ocioso #mar {
   background: var(--gold);
 }
 
-#abertura-pular {
+#intro-skip {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -151,33 +151,33 @@ body.ocioso #mar {
   text-shadow: 1px 1px 0 #000;
 }
 
-body.em-abertura #hud,
-body.em-abertura #acoes,
-body.em-abertura #zoom {
+body.intro-playing #hud,
+body.intro-playing #actions,
+body.intro-playing #zoom {
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
 }
 
-body.em-abertura #mar {
+body.intro-playing #ocean {
   cursor: default;
 }
 
-.hud-topo {
+.hud-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.idioma {
+.language-switch {
   display: flex;
   flex: none;
   gap: 2px;
   pointer-events: auto;
 }
 
-.idioma button {
+.language-switch button {
   min-width: 34px;
   min-height: 28px;
   padding: 2px 6px;
@@ -189,17 +189,17 @@ body.em-abertura #mar {
   cursor: pointer;
 }
 
-.idioma button:hover {
+.language-switch button:hover {
   background: var(--accent);
   color: var(--ink);
 }
 
-.idioma button[aria-pressed='true'] {
+.language-switch button[aria-pressed='true'] {
   background: var(--gold);
   color: var(--ink);
 }
 
-#fundo-modal {
+#modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 20;
@@ -223,7 +223,7 @@ body.em-abertura #mar {
   line-height: 1.25;
 }
 
-.modal-topo {
+.modal-header {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -251,7 +251,7 @@ body.em-abertura #mar {
   margin-bottom: 8px;
 }
 
-#modal .modal-nota {
+#modal .modal-note {
   margin-top: 16px;
   padding-top: 10px;
   border-top: 1px solid var(--panel-soft);
@@ -260,12 +260,12 @@ body.em-abertura #mar {
   color: var(--muted);
 }
 
-#modal .botao-principal {
+#modal .button-primary {
   display: block;
   width: 100%;
 }
 
-#contadores {
+#counters {
   display: flex;
   gap: 14px;
   margin: 0;
@@ -273,7 +273,7 @@ body.em-abertura #mar {
   list-style: none;
 }
 
-#acoes {
+#actions {
   right: 16px;
   bottom: 16px;
   max-width: calc(100vw - 32px);
@@ -283,10 +283,10 @@ body.em-abertura #mar {
   padding: 6px;
 }
 
-#acoes a,
-#acoes button,
-.botao-principal,
-.botao-secundario {
+#actions a,
+#actions button,
+.button-primary,
+.button-secondary {
   display: inline-block;
   min-height: 36px;
   padding: 7px 12px;
@@ -299,19 +299,19 @@ body.em-abertura #mar {
   cursor: pointer;
 }
 
-#acoes a:hover,
-#acoes button:hover,
-.botao-principal:hover {
+#actions a:hover,
+#actions button:hover,
+.button-primary:hover {
   background: var(--accent-hover);
 }
 
-.botao-secundario {
+.button-secondary {
   background: transparent;
   color: var(--paper);
   box-shadow: inset 0 0 0 2px var(--panel-edge);
 }
 
-.botao-secundario:hover {
+.button-secondary:hover {
   background: var(--panel-soft);
 }
 
@@ -348,13 +348,13 @@ body.em-abertura #mar {
   color: var(--ink);
 }
 
-#zoom #tela-cheia {
+#zoom #fullscreen {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-#zoom #tela-cheia[hidden] {
+#zoom #fullscreen[hidden] {
   display: none;
 }
 
@@ -363,13 +363,13 @@ body.em-abertura #mar {
   cursor: default;
 }
 
-#zoom-valor {
+#zoom-value {
   padding: 4px 0;
   font-size: 17px;
   text-align: center;
 }
 
-#balao {
+#balloon {
   position: fixed;
   top: 0;
   left: 0;
@@ -383,49 +383,49 @@ body.em-abertura #mar {
   pointer-events: none;
 }
 
-#balao::after,
-#cartao::after {
+#balloon::after,
+#island-card::after {
   content: '';
   position: absolute;
-  left: var(--seta-x, 50%);
+  left: var(--arrow-x, 50%);
   bottom: -9px;
   width: 10px;
   height: 8px;
 }
 
-#balao::after {
+#balloon::after {
   background: var(--paper);
   border-right: 2px solid var(--ink);
   border-bottom: 2px solid var(--ink);
 }
 
-#balao.sem-seta::after,
-#cartao.sem-seta::after {
+#balloon.no-arrow::after,
+#island-card.no-arrow::after {
   display: none;
 }
 
-#cartao {
+#island-card {
   top: 0;
   left: 0;
   width: 300px;
   padding: 12px;
   outline: none;
-  --cor-energia: var(--energy-dormindo);
+  --energy-color: var(--energy-sleeping);
 }
 
-#cartao[data-energia='pescando'] {
-  --cor-energia: var(--energy-pescando);
+#island-card[data-energy='fishing'] {
+  --energy-color: var(--energy-fishing);
 }
 
-#cartao[data-energia='trabalhando'] {
-  --cor-energia: var(--energy-trabalhando);
+#island-card[data-energy='working'] {
+  --energy-color: var(--energy-working);
 }
 
-#cartao::after {
+#island-card::after {
   background: var(--panel-edge);
 }
 
-.cartao-fechar {
+.close-button {
   position: absolute;
   top: 6px;
   right: 6px;
@@ -441,11 +441,11 @@ body.em-abertura #mar {
   cursor: pointer;
 }
 
-.cartao-fechar:hover {
+.close-button:hover {
   color: var(--gold);
 }
 
-.cartao-topo {
+.card-header {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -453,26 +453,26 @@ body.em-abertura #mar {
   padding-right: 26px;
 }
 
-.cartao-retrato {
+.card-portrait {
   flex: none;
   width: 52px;
   height: 52px;
   background: #3a4a5c;
-  border: 2px solid var(--cor-energia);
+  border: 2px solid var(--energy-color);
 }
 
-.cartao-retrato img {
+.card-portrait img {
   display: block;
   width: 48px;
   height: 48px;
   image-rendering: pixelated;
 }
 
-.cartao-nome {
+.card-name {
   min-width: 0;
 }
 
-#cartao h2 {
+#island-card h2 {
   margin: 0;
   font-size: 26px;
   font-weight: 400;
@@ -480,51 +480,51 @@ body.em-abertura #mar {
   overflow-wrap: anywhere;
 }
 
-.cartao-humor {
+.card-mood {
   margin: 0;
-  color: var(--cor-energia);
+  color: var(--energy-color);
 }
 
-.cartao-energia {
+.card-energy {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 3px;
   margin-bottom: 4px;
 }
 
-.cartao-energia span {
+.card-energy span {
   height: 10px;
   background: var(--panel-soft);
 }
 
-.cartao-energia span.cheio {
-  background: var(--cor-energia);
+.card-energy span.filled {
+  background: var(--energy-color);
 }
 
-.cartao-linha {
+.card-line {
   margin: 0 0 4px;
   color: var(--muted);
 }
 
-.cartao-estrelas {
+.card-stars {
   margin-top: 10px;
   font-size: 24px;
   color: var(--gold);
 }
 
-.cartao-progresso {
+.card-progress {
   height: 8px;
   margin-bottom: 12px;
   background: var(--panel-soft);
 }
 
-.cartao-progresso span {
+.card-progress span {
   display: block;
   height: 100%;
   background: var(--gold);
 }
 
-.cartao-acoes {
+.card-actions {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -541,7 +541,7 @@ body.em-abertura #mar {
     transform: none;
   }
 
-  #cartao {
+  #island-card {
     top: auto;
     right: 0;
     bottom: 0;
@@ -554,18 +554,18 @@ body.em-abertura #mar {
     transform: none !important;
   }
 
-  body:has(#cartao:not([hidden])) #zoom {
+  body:has(#island-card:not([hidden])) #zoom {
     display: none;
   }
 
-  #cartao::after {
+  #island-card::after {
     display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   #hud,
-  #acoes,
+  #actions,
   #zoom {
     transition: none;
   }

@@ -1,6 +1,6 @@
 // Clima, maré e decorações de datas comemorativas da cena.
 
-import { isLowTide, holidayOn, tideLevel, weatherAt } from '../calendar.js';
+import { isLowTide, holidayOn, tideLevel, weatherAt } from '../core/calendar.js';
 import { islandFront } from './scene-art.js';
 import { PROP_POSITIONS } from './scene-art.js';
 
@@ -38,8 +38,8 @@ export class Ambience {
 
   conditions() {
     return {
-      rain: this.weather === 'chuva',
-      hot: this.weather === 'calor',
+      rain: this.weather === 'rain',
+      hot: this.weather === 'heat',
       lowTide: this.lowTide,
     };
   }
@@ -72,7 +72,7 @@ export class Ambience {
   }
 
   drawWeather(g, view) {
-    if (this.weather === 'chuva') {
+    if (this.weather === 'rain') {
       g.fillStyle = 'rgba(32, 42, 66, 0.26)';
       g.fillRect(0, 0, view.w, view.h);
       for (let i = 0; i < 150; i += 1) {
@@ -91,7 +91,7 @@ export class Ambience {
         g.fillStyle = `rgba(220, 240, 245, ${0.6 * (1 - cycle)})`;
         g.fillRect(x - Math.round(cycle * 4), y, 2 + Math.round(cycle * 8), 1);
       }
-    } else if (this.weather === 'calor') {
+    } else if (this.weather === 'heat') {
       g.fillStyle = 'rgba(255, 150, 60, 0.07)';
       g.fillRect(0, 0, view.w, view.h);
     }
@@ -100,7 +100,7 @@ export class Ambience {
   drawFireworks(g, view) {
     const { palette } = this.scene;
     if (!palette || palette.night < 0.3) return;
-    if (this.holiday !== 'anoNovo' && this.holiday !== 'independencia') return;
+    if (this.holiday !== 'newYear' && this.holiday !== 'independenceDay') return;
     for (let i = 0; i < 4; i += 1) {
       const period = 3 + i * 0.7;
       const round = Math.floor((this.time + i * 1.1) / period);
@@ -131,7 +131,7 @@ export class Ambience {
       g.fillRect(x, y, w, h);
     };
 
-    if (holiday === 'natal') {
+    if (holiday === 'christmas') {
       const crown = this.scene.palmCrown();
       for (let i = 0; i < 14; i += 1) {
         const angle = (i / 14) * Math.PI;
@@ -167,7 +167,7 @@ export class Ambience {
         }
       }
     }
-    if (holiday === 'saoPatricio') {
+    if (holiday === 'stPatricks') {
       for (let i = 0; i < 10; i += 1) {
         const code = hash(i + 80);
         const x = toX(-120 + (code % 240));
@@ -178,7 +178,7 @@ export class Ambience {
         rect(x + 1, y + 2, 1, 2, '#2f7741');
       }
     }
-    if (holiday === 'festaJunina') {
+    if (holiday === 'juneFestival') {
       const from = { x: toX(-96), y: toY(-30) };
       const to = { x: toX(60), y: toY(-8) };
       for (let i = 0; i <= 18; i += 1) {
@@ -192,7 +192,7 @@ export class Ambience {
         }
       }
     }
-    if (holiday === 'carnaval') {
+    if (holiday === 'carnival') {
       for (let i = 0; i < 34; i += 1) {
         const code = hash(i + 200);
         const x = (code % view.w) + Math.round(Math.sin(time + i) * 4);
@@ -201,8 +201,8 @@ export class Ambience {
         rect(x, y, 2, 2, PENNANT_COLORS[code % PENNANT_COLORS.length]);
       }
     }
-    if (holiday === 'independencia') {
-      const { x, y } = PROP_POSITIONS.bancada;
+    if (holiday === 'independenceDay') {
+      const { x, y } = PROP_POSITIONS.workbench;
       const left = toX(x);
       const top = toY(y - 21);
       rect(left - 1, top, 1, 6, '#f4ecd8');
@@ -220,24 +220,24 @@ export class Ambience {
       g.fillStyle = color;
       g.fillRect(x + px, y + py, w, h);
     };
-    if (this.holiday === 'natal') {
+    if (this.holiday === 'christmas') {
       rect(-6, -1, 12, 3, '#f4f6ff');
       rect(-5, -5, 10, 4, '#d84f3f');
       rect(-3, -8, 6, 3, '#d84f3f');
       rect(2, -8, 3, 3, '#f4f6ff');
-    } else if (this.holiday === 'anoNovo' || this.holiday === 'carnaval') {
+    } else if (this.holiday === 'newYear' || this.holiday === 'carnival') {
       for (let row = 0; row < 9; row += 1) {
         rect(-Math.floor((9 - row) / 2), -row, 9 - row, 1, row % 3 === 0 ? '#f2c94c' : '#d84f3f');
       }
       rect(-1, -10, 2, 2, '#57d36b');
-    } else if (this.holiday === 'saoPatricio') {
+    } else if (this.holiday === 'stPatricks') {
       rect(-7, 0, 14, 2, '#231a2b');
       rect(-5, -6, 10, 6, '#2f9078');
       rect(-5, -2, 10, 1, '#f2c94c');
     } else if (this.holiday === 'halloween') {
       rect(-7, 0, 14, 2, '#231a2b');
       for (let row = 0; row < 8; row += 1) rect(-Math.floor((8 - row) / 2), -row, 8 - row, 1, '#3a2a55');
-    } else if (this.holiday === 'festaJunina') {
+    } else if (this.holiday === 'juneFestival') {
       rect(-8, 0, 16, 2, '#d2bb68');
       rect(-4, -4, 8, 4, '#e7d28a');
       rect(-4, -1, 8, 1, '#d84f3f');

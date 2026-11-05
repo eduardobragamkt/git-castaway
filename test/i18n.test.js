@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { DEFAULT_LANGUAGE, LANGUAGES, TEXTS, initialLanguage } from '../js/i18n.js';
+import { DEFAULT_LANGUAGE, LANGUAGES, TEXTS, initialLanguage } from '../js/core/i18n.js';
 import { BOTTLE_MESSAGES, pickBottleMessage } from '../js/scene/messages.js';
 
 function assertSameShape(a, b, path = 'TEXTS') {

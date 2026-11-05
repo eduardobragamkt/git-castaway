@@ -1,7 +1,7 @@
 import { LOCAL_DATA_URL, MOTHER_OWNER, MOTHER_PAGES_URL, MOTHER_REPO, MOTHER_REPO_URL } from './config.js';
 
 const LOGIN_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$/i;
-const ENERGY_LEVELS = new Set(['dormindo', 'pescando', 'trabalhando']);
+const ENERGY_LEVELS = new Set(['sleeping', 'fishing', 'working']);
 
 export function isLocalHost(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
@@ -16,18 +16,18 @@ export function profileUrl(login) {
 export function devOptions(location) {
   if (!isLocalHost(location.hostname)) return {};
   const params = new URLSearchParams(location.search);
-  const hour = Number(params.get('hora'));
-  const date = new Date(params.get('data'));
-  const tide = Number(params.get('mare'));
+  const hour = Number(params.get('hour'));
+  const date = new Date(params.get('date'));
+  const tide = Number(params.get('tide'));
   return {
-    activity: params.get('cena'),
-    variant: params.get('variante'),
-    hour: params.has('hora') && Number.isFinite(hour) ? hour : null,
-    view: params.get('visao'),
-    date: params.has('data') && !Number.isNaN(date.getTime()) ? date : null,
-    weather: params.get('clima'),
-    tide: params.has('mare') && Number.isFinite(tide) ? tide : null,
-    intro: params.get('abertura') === '1',
+    activity: params.get('activity'),
+    variant: params.get('variant'),
+    hour: params.has('hour') && Number.isFinite(hour) ? hour : null,
+    view: params.get('view'),
+    date: params.has('date') && !Number.isNaN(date.getTime()) ? date : null,
+    weather: params.get('weather'),
+    tide: params.has('tide') && Number.isFinite(tide) ? tide : null,
+    intro: params.get('intro') === '1',
   };
 }
 
@@ -47,17 +47,17 @@ export function requestedIsland(location) {
 
 export function emptyData() {
   return {
-    versao: 1,
-    geradoEm: null,
-    mae: { owner: MOTHER_OWNER, repo: MOTHER_REPO, url: MOTHER_REPO_URL },
-    ilhaPrincipal: {
+    version: 1,
+    generatedAt: null,
+    mother: { owner: MOTHER_OWNER, repo: MOTHER_REPO, url: MOTHER_REPO_URL },
+    mainIsland: {
       login: MOTHER_OWNER,
       avatar: '',
       url: MOTHER_REPO_URL,
-      criadoEm: null,
-      estrelas: 0,
+      createdAt: null,
+      stars: 0,
       commits3d: 0,
-      energia: 'dormindo',
+      energy: 'sleeping',
     },
     totalForks: 0,
     forks: [],
@@ -73,10 +73,10 @@ function normalizeIsland(raw) {
     login: String(raw.login ?? ''),
     avatar: httpsOrNull(raw.avatar),
     url: httpsOrNull(raw.url),
-    criadoEm: typeof raw.criadoEm === 'string' ? raw.criadoEm : null,
-    estrelas: Math.max(0, Number(raw.estrelas) || 0),
+    createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : null,
+    stars: Math.max(0, Number(raw.stars) || 0),
     commits3d: Math.max(0, Number(raw.commits3d) || 0),
-    energia: ENERGY_LEVELS.has(raw.energia) ? raw.energia : 'dormindo',
+    energy: ENERGY_LEVELS.has(raw.energy) ? raw.energy : 'sleeping',
   };
 }
 
@@ -85,15 +85,15 @@ export function normalizeData(raw) {
   return {
     ...base,
     ...raw,
-    mae: { ...base.mae, ...raw?.mae },
-    ilhaPrincipal: normalizeIsland({ ...base.ilhaPrincipal, ...raw?.ilhaPrincipal }),
+    mother: { ...base.mother, ...raw?.mother },
+    mainIsland: normalizeIsland({ ...base.mainIsland, ...raw?.mainIsland }),
     forks: Array.isArray(raw?.forks) ? raw.forks.map(normalizeIsland) : [],
   };
 }
 
 export function dataSources(location) {
   if (isLocalHost(location.hostname)) {
-    const fixture = new URLSearchParams(location.search).get('dados');
+    const fixture = new URLSearchParams(location.search).get('data');
     return [fixture && /^test\/fixtures\/[\w-]+\.json$/.test(fixture) ? fixture : LOCAL_DATA_URL];
   }
   return [LOCAL_DATA_URL];
@@ -105,7 +105,7 @@ export async function loadData(location, fetcher = fetch) {
       const response = await fetcher(source);
       if (response.ok) return { data: normalizeData(await response.json()), online: true };
     } catch (error) {
-      console.warn(`Não foi possível ler ${source}`, error);
+      console.warn(`Could not read ${source}`, error);
     }
   }
   return { data: normalizeData(emptyData()), online: false };
@@ -114,8 +114,8 @@ export async function loadData(location, fetcher = fetch) {
 // Todas as ilhas do arquipélago: a principal primeiro e depois os forks. Quem ainda não
 // está nos dados, como um fork recém-criado, ganha uma ilha nova ao final da lista.
 export function buildIslandSpecs(data, wantedLogin = null) {
-  const main = { ...data.ilhaPrincipal, principal: true };
-  const forks = data.forks.map((fork) => ({ ...fork, principal: false }));
+  const main = { ...data.mainIsland, isMain: true };
+  const forks = data.forks.map((fork) => ({ ...fork, isMain: false }));
   const specs = [main, ...forks];
   if (!wantedLogin || findIslandSpec(specs, wantedLogin)) return specs;
   return [
@@ -124,11 +124,11 @@ export function buildIslandSpecs(data, wantedLogin = null) {
       login: wantedLogin,
       avatar: null,
       url: null,
-      criadoEm: null,
-      estrelas: 0,
+      createdAt: null,
+      stars: 0,
       commits3d: 0,
-      energia: 'dormindo',
-      principal: false,
+      energy: 'sleeping',
+      isMain: false,
     },
   ];
 }

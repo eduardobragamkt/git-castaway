@@ -1,7 +1,7 @@
-import { MOTHER_REPO_URL } from './config.js';
-import { daysOnIsland, pendingMilestones } from './calendar.js';
-import { buildIslandSpecs, devOptions, findIslandSpec, forkRedirectUrl, loadData, profileUrl, requestedIsland } from './data.js';
-import { LANGUAGES, TEXTS, initialLanguage } from './i18n.js';
+import { MOTHER_REPO_URL } from './core/config.js';
+import { daysOnIsland, pendingMilestones } from './core/calendar.js';
+import { buildIslandSpecs, devOptions, findIslandSpec, forkRedirectUrl, loadData, profileUrl, requestedIsland } from './core/data.js';
+import { LANGUAGES, TEXTS, initialLanguage } from './core/i18n.js';
 import {
   INTRO,
   canSkipIntro,
@@ -12,15 +12,15 @@ import {
   shouldPlayIntro,
   takeProgress,
   typedText,
-} from './intro.js';
-import { Island } from './island.js';
-import { islandPosition, worldBounds } from './layout.js';
-import { drawOcean } from './ocean.js';
-import { ACTIVITIES, introBottle } from './scene/activities.js';
+} from './core/intro.js';
+import { Island } from './map/island.js';
+import { islandPosition, worldBounds } from './map/layout.js';
+import { drawOcean } from './map/ocean.js';
+import { ACTIVITIES, introBottle } from './scene/activities/index.js';
 import { Scene } from './scene/scene.js';
-import { currentHour, paletteAt } from './time.js';
-import { STAR_UPGRADES, nextUpgrade } from './upgrades.js';
-import { cameraAfterZoom, clampScale, clampSceneCamera, fitScale, scaleLimits, stepScale, zoomPercent } from './zoom.js';
+import { currentHour, paletteAt } from './core/time.js';
+import { STAR_UPGRADES, nextUpgrade } from './core/upgrades.js';
+import { cameraAfterZoom, clampScale, clampSceneCamera, fitScale, scaleLimits, stepScale, zoomPercent } from './core/zoom.js';
 
 const LANGUAGE_KEY = 'git-castaway:idioma';
 
@@ -43,26 +43,26 @@ const IDLE_AFTER_MS = 5000;
 const ZOOM_MENU_SPACE = 80;
 const REDUCED_MOTION = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-const canvas = document.getElementById('mar');
+const canvas = document.getElementById('ocean');
 const ctx = canvas.getContext('2d');
-const balloon = document.getElementById('balao');
-const card = document.getElementById('cartao');
-const backButton = document.getElementById('voltar');
-const zoomLabel = document.getElementById('zoom-valor');
-const zoomInButton = document.getElementById('zoom-mais');
-const zoomOutButton = document.getElementById('zoom-menos');
-const zoomFitButton = document.getElementById('zoom-ajustar');
-const fullscreenButton = document.getElementById('tela-cheia');
-const fullscreenIcon = document.getElementById('icone-tela-cheia');
-const forkButton = document.getElementById('criar-ilha');
-const readMeButton = document.getElementById('leia-me');
-const modalBackdrop = document.getElementById('fundo-modal');
+const balloon = document.getElementById('balloon');
+const card = document.getElementById('island-card');
+const backButton = document.getElementById('back');
+const zoomLabel = document.getElementById('zoom-value');
+const zoomInButton = document.getElementById('zoom-in');
+const zoomOutButton = document.getElementById('zoom-out');
+const zoomFitButton = document.getElementById('zoom-fit');
+const fullscreenButton = document.getElementById('fullscreen');
+const fullscreenIcon = document.getElementById('fullscreen-icon');
+const forkButton = document.getElementById('create-island');
+const readMeButton = document.getElementById('read-me');
+const modalBackdrop = document.getElementById('modal-backdrop');
 const modal = document.getElementById('modal');
-const replayButton = document.getElementById('rever-abertura');
-const introOverlay = document.getElementById('abertura');
-const introCurtain = document.getElementById('abertura-cortina');
-const introTerminal = document.getElementById('abertura-terminal');
-const introSkip = document.getElementById('abertura-pular');
+const replayButton = document.getElementById('replay-intro');
+const introOverlay = document.getElementById('intro');
+const introCurtain = document.getElementById('intro-curtain');
+const introTerminal = document.getElementById('intro-terminal');
+const introSkip = document.getElementById('intro-skip');
 const FULLSCREEN_ICON = 'M1 1h5v2H3v3H1V1zm9 0h5v5h-2V3h-3V1zM1 10h2v3h3v2H1v-5zm12 0h2v5h-5v-2h3v-3z';
 const EXIT_FULLSCREEN_ICON = 'M4 1h2v5H1V4h3V1zm6 0h2v3h3v2h-5V1zM1 10h5v5H4v-3H1v-2zm9 0h5v2h-3v3h-2v-5z';
 
@@ -232,7 +232,7 @@ function setupPointer() {
       moved = false;
       startX = event.clientX;
       startY = event.clientY;
-      canvas.classList.add('arrastando');
+      canvas.classList.add('dragging');
     }
     if (pointers.size === 2) {
       moved = true;
@@ -266,7 +266,7 @@ function setupPointer() {
     pointers.delete(event.pointerId);
     if (pointers.size < 2) pinch = null;
     if (pointers.size > 0) return;
-    canvas.classList.remove('arrastando');
+    canvas.classList.remove('dragging');
     if (event.type === 'pointerup' && !moved) handleClick(event.clientX, event.clientY);
   };
   canvas.addEventListener('pointerup', release);
@@ -325,15 +325,15 @@ function linkButton(href, label, className) {
 
 function showCard(spec, anchorFn, onEnter = null) {
   card.replaceChildren();
-  card.dataset.energia = spec.energia;
+  card.dataset.energy = spec.energy;
 
-  const close = element('button', 'cartao-fechar', '×');
+  const close = element('button', 'close-button', '×');
   close.type = 'button';
   close.setAttribute('aria-label', TEXT.close);
   close.addEventListener('click', closeCard);
 
-  const header = element('header', 'cartao-topo');
-  const portrait = element('div', 'cartao-retrato');
+  const header = element('header', 'card-header');
+  const portrait = element('div', 'card-portrait');
   if (spec.avatar) {
     const image = document.createElement('img');
     image.alt = '';
@@ -343,41 +343,41 @@ function showCard(spec, anchorFn, onEnter = null) {
     image.addEventListener('error', () => image.remove());
     portrait.append(image);
   }
-  const identity = element('div', 'cartao-nome');
+  const identity = element('div', 'card-name');
   const title = element('h2', null, spec.login);
-  title.id = 'cartao-titulo';
-  identity.append(title, element('p', 'cartao-humor', TEXT.energy[spec.energia]));
+  title.id = 'island-card-title';
+  identity.append(title, element('p', 'card-mood', TEXT.energy[spec.energy]));
   header.append(portrait, identity);
 
-  const meter = element('div', 'cartao-energia');
+  const meter = element('div', 'card-energy');
   meter.setAttribute('role', 'img');
   meter.setAttribute('aria-label', TEXT.commits(spec.commits3d));
   for (let i = 0; i < 5; i += 1) {
-    meter.append(element('span', i < spec.commits3d ? 'cheio' : null));
+    meter.append(element('span', i < spec.commits3d ? 'filled' : null));
   }
-  const activity = element('p', 'cartao-linha', TEXT.commits(spec.commits3d));
+  const activity = element('p', 'card-line', TEXT.commits(spec.commits3d));
 
-  const upcoming = nextUpgrade(spec.estrelas);
+  const upcoming = nextUpgrade(spec.stars);
   const previousStars = upcoming
-    ? [...STAR_UPGRADES].reverse().find((upgrade) => upgrade.stars <= spec.estrelas)?.stars ?? 0
+    ? [...STAR_UPGRADES].reverse().find((upgrade) => upgrade.stars <= spec.stars)?.stars ?? 0
     : 0;
-  const stars = element('p', 'cartao-linha cartao-estrelas', `★ ${spec.estrelas}`);
+  const stars = element('p', 'card-line card-stars', `★ ${spec.stars}`);
   const goal = element(
     'p',
-    'cartao-linha',
+    'card-line',
     upcoming ? TEXT.next(upcoming[LANGUAGE], upcoming.stars) : TEXT.complete,
   );
-  const progress = element('div', 'cartao-progresso');
+  const progress = element('div', 'card-progress');
   const bar = element('span');
-  const share = upcoming ? (spec.estrelas - previousStars) / (upcoming.stars - previousStars) : 1;
+  const share = upcoming ? (spec.stars - previousStars) / (upcoming.stars - previousStars) : 1;
   bar.style.width = `${Math.round(share * 100)}%`;
   progress.append(bar);
 
-  const actions = element('div', 'cartao-acoes');
-  const profile = linkButton(profileUrl(spec.login), TEXT.profile, 'botao-principal');
+  const actions = element('div', 'card-actions');
+  const profile = linkButton(profileUrl(spec.login), TEXT.profile, 'button-primary');
   if (profile) actions.append(profile);
   if (onEnter) {
-    const enter = element('button', 'botao-secundario', TEXT.enter);
+    const enter = element('button', 'button-secondary', TEXT.enter);
     enter.type = 'button';
     enter.addEventListener('click', () => {
       closeCard();
@@ -386,13 +386,13 @@ function showCard(spec, anchorFn, onEnter = null) {
     actions.append(enter);
   }
 
-  const dayCount = daysOnIsland(spec.criadoEm, dateNow());
-  const days = dayCount ? element('p', 'cartao-linha', TEXT.days(dayCount)) : null;
+  const dayCount = daysOnIsland(spec.createdAt, dateNow());
+  const days = dayCount ? element('p', 'card-line', TEXT.days(dayCount)) : null;
 
   card.append(close, header, meter, activity, ...(days ? [days] : []), stars, goal, progress, actions);
   card.hidden = false;
   cardAnchor = anchorFn;
-  document.body.classList.remove('ocioso');
+  document.body.classList.remove('idle');
   positionFloating(card, cardAnchor(), true);
   card.focus({ preventScroll: true });
 }
@@ -414,8 +414,8 @@ function positionFloating(node, worldPoint, isCard = false) {
   const x = Math.max(16, Math.min(window.innerWidth - width - rightMargin, point.x - width / 2));
   const y = Math.max(16, point.y - height - 12);
   node.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
-  node.style.setProperty('--seta-x', `${Math.round(Math.max(12, Math.min(width - 20, point.x - x - 5)))}px`);
-  node.classList.toggle('sem-seta', point.y - height - 12 < 16);
+  node.style.setProperty('--arrow-x', `${Math.round(Math.max(12, Math.min(width - 20, point.x - x - 5)))}px`);
+  node.classList.toggle('no-arrow', point.y - height - 12 < 16);
 }
 
 // Navegação entre mapa e cena
@@ -457,7 +457,7 @@ function openBalloon(textFn, anchorFn) {
 // O endereço de cada ilha é `?ilha=login`, dentro da única URL pública.
 function syncIslandUrl(spec) {
   const url = new URL(window.location.href);
-  if (spec && !spec.principal) url.searchParams.set('ilha', spec.login);
+  if (spec && !spec.isMain) url.searchParams.set('ilha', spec.login);
   else url.searchParams.delete('ilha');
   window.history.replaceState(null, '', url);
 }
@@ -517,11 +517,11 @@ function updateHud() {
   const spec = activeView === 'scene' && scene ? scene.spec : islands[0].spec;
   let label = TEXT.offline;
   if (online) label = activeView === 'map' ? TEXT.archipelago : TEXT.islandOf(spec.login);
-  document.getElementById('modo').textContent = label;
+  document.getElementById('mode').textContent = label;
 
-  document.getElementById('estrelas').textContent = spec.estrelas;
+  document.getElementById('stars').textContent = spec.stars;
   document.getElementById('forks').textContent = appData.totalForks;
-  document.getElementById('contador-forks').hidden = !spec.principal;
+  document.getElementById('fork-counter').hidden = !spec.isMain;
 
   if (activeView === 'scene') {
     backButton.hidden = false;
@@ -554,7 +554,7 @@ function setupHud() {
 // Idiomas: inglês por padrão, com a escolha guardada no navegador.
 
 function renderLanguageSwitches() {
-  document.querySelectorAll('[data-idioma]').forEach((holder) => {
+  document.querySelectorAll('[data-language-switch]').forEach((holder) => {
     holder.setAttribute('role', 'group');
     holder.setAttribute('aria-label', TEXT.languageMenu);
     holder.replaceChildren(
@@ -610,14 +610,14 @@ function setLanguage(code) {
 // Pop-ups "Criar minha ilha" e "Leia-me"
 
 function renderModal() {
-  const top = element('div', 'modal-topo');
+  const top = element('div', 'modal-header');
   const title = element('h2', null, openModal === 'fork' ? TEXT.forkTitle : TEXT.aboutTitle);
-  title.id = 'modal-titulo';
-  const language = element('div', 'idioma');
-  language.dataset.idioma = '';
+  title.id = 'modal-title';
+  const language = element('div', 'language-switch');
+  language.dataset.languageSwitch = '';
   top.append(title, language);
 
-  const close = element('button', 'cartao-fechar', '×');
+  const close = element('button', 'close-button', '×');
   close.type = 'button';
   close.setAttribute('aria-label', TEXT.close);
   close.addEventListener('click', closeModal);
@@ -626,13 +626,13 @@ function renderModal() {
   if (openModal === 'fork') {
     const steps = element('ol');
     TEXT.forkSteps.forEach((step) => steps.append(element('li', null, step)));
-    const repoUrl = appData.mae.url ?? MOTHER_REPO_URL;
-    const action = linkButton(`${repoUrl}/fork`, TEXT.forkAction, 'botao-principal');
+    const repoUrl = appData.mother.url ?? MOTHER_REPO_URL;
+    const action = linkButton(`${repoUrl}/fork`, TEXT.forkAction, 'button-primary');
     action.addEventListener('click', closeModal);
     content.push(steps, action);
   } else {
     TEXT.aboutParagraphs.forEach((paragraph) => content.push(element('p', null, paragraph)));
-    content.push(element('p', 'modal-nota', TEXT.aboutNote));
+    content.push(element('p', 'modal-note', TEXT.aboutNote));
   }
   modal.replaceChildren(close, top, ...content);
   renderLanguageSwitches();
@@ -643,7 +643,7 @@ function showModal(kind, trigger) {
   openModal = kind;
   modalTrigger = trigger;
   modalBackdrop.hidden = false;
-  document.body.classList.remove('ocioso');
+  document.body.classList.remove('idle');
   renderModal();
   modal.scrollTop = 0;
   modal.focus({ preventScroll: true });
@@ -714,13 +714,13 @@ function startIntro() {
   closeCard();
   stopReading();
   const main = islands[0].spec;
-  const days = daysOnIsland(main.criadoEm, dateNow()) ?? 1;
+  const days = daysOnIsland(main.createdAt, dateNow()) ?? 1;
   scene = buildScene(main);
   scene.showDistantLight = true;
   const lines = introLines(days, appData.totalForks + 1, TEXT);
   introTerminal.replaceChildren(
     ...lines.map((line) => {
-      const row = element('div', 'abertura-linha');
+      const row = element('div', 'intro-line');
       row.hidden = true;
       line.row = row;
       return row;
@@ -728,7 +728,7 @@ function startIntro() {
   );
   intro = { time: 0, take: null, lines };
   introOverlay.hidden = false;
-  document.body.classList.add('em-abertura');
+  document.body.classList.add('intro-playing');
   zoomOverride.scene = null;
   activeView = 'scene';
   cameras.scene = { x: 290, y: -8 };
@@ -745,8 +745,8 @@ function renderIntroTerminal() {
   lines.forEach((line, index) => {
     line.row.hidden = index > current;
     line.row.textContent = typedText(line, time);
-    line.row.classList.toggle('atual', index === current);
-    line.row.classList.toggle('anterior', index < current);
+    line.row.classList.toggle('current', index === current);
+    line.row.classList.toggle('previous', index < current);
   });
   introCurtain.style.opacity = String(curtainOpacity(time));
 }
@@ -796,7 +796,7 @@ function updateIntro(dt) {
 function finishIntro(skipped) {
   intro = null;
   introOverlay.hidden = true;
-  document.body.classList.remove('em-abertura');
+  document.body.classList.remove('intro-playing');
   zoomOverride.map = null;
   zoomOverride.scene = null;
   scene.showDistantLight = false;
@@ -831,10 +831,10 @@ function setupIntroSkip() {
 // Painéis somem quando ninguém mexe no mouse, deixando só o quadro vivo.
 function setupIdle() {
   const wake = () => {
-    document.body.classList.remove('ocioso');
+    document.body.classList.remove('idle');
     window.clearTimeout(idleTimer);
     idleTimer = window.setTimeout(() => {
-      if (card.hidden && !openModal) document.body.classList.add('ocioso');
+      if (card.hidden && !openModal) document.body.classList.add('idle');
     }, IDLE_AFTER_MS);
   };
   ['pointermove', 'pointerdown', 'keydown', 'focusin'].forEach((type) => window.addEventListener(type, wake));
@@ -882,12 +882,12 @@ function deliverMilestone() {
 
 // A caixa cai quando este navegador ainda não viu a contagem atual de estrelas.
 function starsAreNew(spec) {
-  if (spec.estrelas <= 0) return false;
+  if (spec.stars <= 0) return false;
   const key = `git-castaway:estrelas:${spec.login}`;
   try {
     const seen = Number(localStorage.getItem(key)) || 0;
-    localStorage.setItem(key, String(spec.estrelas));
-    return spec.estrelas > seen;
+    localStorage.setItem(key, String(spec.stars));
+    return spec.stars > seen;
   } catch {
     return false;
   }
@@ -973,7 +973,7 @@ async function start() {
 
   const focus = wantedLogin ? findIslandSpec(specs, wantedLogin) : null;
   const startSpec = focus ?? islands[0].spec;
-  const startInScene = dev.view === 'cena' || (dev.view !== 'mapa' && (Boolean(focus) || islands.length === 1));
+  const startInScene = dev.view === 'scene' || (dev.view !== 'map' && (Boolean(focus) || islands.length === 1));
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   setupZoomMenu();
   setupFullscreen();

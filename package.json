@@ -1,15 +1,15 @@
 {
   "name": "git-castaway",
   "version": "1.0.0",
-  "description": "Um arquipélago vivo em pixel art movido pela atividade pública do GitHub.",
+  "description": "A living pixel art archipelago powered by public GitHub activity.",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "dev": "node scripts/dev-server.js",
-    "sync": "node scripts/update-data.js",
     "test": "node --test"
   }
 }

@@ -225,7 +225,7 @@ export class WorldEvents {
   }
 
   puffSmoke(count) {
-    const { x, y } = PROP_POSITIONS.fogueira;
+    const { x, y } = PROP_POSITIONS.campfire;
     for (let i = 0; i < count; i += 1) {
       this.smoke.push({ x: x + (i - count / 2) * 2, y: y - 8, age: -i * 0.18 });
     }
@@ -249,12 +249,12 @@ export class WorldEvents {
     const left = view.left;
     const right = view.left + view.w;
     const starts = {
-      aviao: { x: left - 110, y: -96 },
-      balao: { x: left - 20, y: -92, dropped: false },
-      golfinhos: { x: right + 30, y: 82 },
-      tartaruga: { x: 136, y: 62, age: 0 },
-      baleia: { x: left + view.w * 0.8, y: 6, age: 0 },
-      revoada: { x: left - 90, y: -112 },
+      plane: { x: left - 110, y: -96 },
+      balloon: { x: left - 20, y: -92, dropped: false },
+      dolphins: { x: right + 30, y: 82 },
+      turtle: { x: 136, y: 62, age: 0 },
+      whale: { x: left + view.w * 0.8, y: 6, age: 0 },
+      flock: { x: left - 90, y: -112 },
     };
     this.visitors.push({ type, ...starts[type] });
   }
@@ -373,7 +373,7 @@ export class WorldEvents {
     } else if (perch.mode === 'pool') {
       target = { x: 88, y: 46 };
     } else {
-      const { x, y } = PROP_POSITIONS.quadro;
+      const { x, y } = PROP_POSITIONS.commitSign;
       target = { x, y: y - 36 };
     }
     const distance = Math.hypot(target.x - perch.x, target.y - perch.y);
@@ -392,20 +392,20 @@ export class WorldEvents {
   updateVisitors(dt, left, right) {
     for (const visitor of this.visitors) {
       switch (visitor.type) {
-        case 'aviao':
+        case 'plane':
           visitor.x += 72 * dt;
           break;
-        case 'balao':
+        case 'balloon':
           visitor.x += 34 * dt;
           if (!visitor.dropped && visitor.x > 20) {
             visitor.dropped = true;
             this.parcel = { x: visitor.x, y: visitor.y + 24, age: 0 };
           }
           break;
-        case 'golfinhos':
+        case 'dolphins':
           visitor.x -= 68 * dt;
           break;
-        case 'tartaruga':
+        case 'turtle':
           visitor.age += dt;
           if (visitor.age < 6) {
             visitor.x -= 11 * dt;
@@ -415,21 +415,21 @@ export class WorldEvents {
             visitor.y += 1.6 * dt;
           }
           break;
-        case 'baleia':
+        case 'whale':
           visitor.age += dt;
           break;
-        case 'revoada':
+        case 'flock':
           visitor.x += 48 * dt;
           break;
         default:
       }
     }
     this.visitors = this.visitors.filter((visitor) => {
-      if (visitor.type === 'aviao' || visitor.type === 'balao' || visitor.type === 'revoada') {
+      if (visitor.type === 'plane' || visitor.type === 'balloon' || visitor.type === 'flock') {
         return visitor.x < right + 130;
       }
-      if (visitor.type === 'golfinhos') return visitor.x > left - 100;
-      return visitor.age < (visitor.type === 'baleia' ? 7 : 16);
+      if (visitor.type === 'dolphins') return visitor.x > left - 100;
+      return visitor.age < (visitor.type === 'whale' ? 7 : 16);
     });
     if (this.parcel) {
       this.parcel.age += dt;
@@ -472,10 +472,10 @@ export class WorldEvents {
     for (const visitor of this.visitors) {
       const x = Math.round(visitor.x - view.left);
       const y = Math.round(visitor.y - view.top);
-      if (visitor.type === 'aviao') this.drawPlane(g, x, y);
-      if (visitor.type === 'balao') this.drawBalloon(g, x, y + Math.round(Math.sin(this.time) * 3));
-      if (visitor.type === 'revoada') this.drawFlock(g, x, y);
-      if (visitor.type === 'baleia') this.drawWhale(g, x, y, visitor.age);
+      if (visitor.type === 'plane') this.drawPlane(g, x, y);
+      if (visitor.type === 'balloon') this.drawBalloon(g, x, y + Math.round(Math.sin(this.time) * 3));
+      if (visitor.type === 'flock') this.drawFlock(g, x, y);
+      if (visitor.type === 'whale') this.drawWhale(g, x, y, visitor.age);
     }
   }
 
@@ -573,7 +573,7 @@ export class WorldEvents {
     if (this.tempFire > 0) this.drawTempFire(g, toX, toY);
     if (this.sparks > 0) {
       for (let i = 0; i < 4; i += 1) {
-        const { x, y } = PROP_POSITIONS.fogueira;
+        const { x, y } = PROP_POSITIONS.campfire;
         paint(g, toX(x + Math.sin(this.time * 19 + i) * 7), toY(y - 7 - i * 2), 1, 1, '#ffe37a');
       }
     }
@@ -623,8 +623,8 @@ export class WorldEvents {
       paint(g, x - 1, y - 8, 2, 8, '#ea7a3a');
     }
     for (const visitor of this.visitors) {
-      if (visitor.type === 'golfinhos') this.drawDolphins(g, visitor, toX, toY);
-      if (visitor.type === 'tartaruga') this.drawTurtle(g, toX(visitor.x), toY(visitor.y));
+      if (visitor.type === 'dolphins') this.drawDolphins(g, visitor, toX, toY);
+      if (visitor.type === 'turtle') this.drawTurtle(g, toX(visitor.x), toY(visitor.y));
     }
     if (this.perch) {
       const landed = this.perch.landed && !this.perch.leaving;
@@ -668,7 +668,7 @@ export class WorldEvents {
   }
 
   drawTempFire(g, toX, toY) {
-    const { x, y } = PROP_POSITIONS.fogueira;
+    const { x, y } = PROP_POSITIONS.campfire;
     const left = toX(x);
     const base = toY(y - 3);
     paint(g, left - 8, base + 1, 16, 2, '#54331f');

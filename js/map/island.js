@@ -1,10 +1,10 @@
 // Uma instância de ilha. Sabe se atualizar e se desenhar em qualquer posição do mundo.
 
-import { VARIANTS, characterSprite, decorationSprites, drawLine, hashString, islandArt } from './art.js';
+import { VARIANTS, characterSprite, decorationSprites, drawLine, hashString, islandArt } from './map-art.js';
 import { Castaway } from './castaway.js';
-import { STAR_UPGRADES } from './upgrades.js';
+import { STAR_UPGRADES } from '../core/upgrades.js';
 
-const ENERGY_COLORS = { dormindo: '#9aa3b2', pescando: '#f2c94c', trabalhando: '#57d36b' };
+const ENERGY_COLORS = { sleeping: '#9aa3b2', fishing: '#f2c94c', working: '#57d36b' };
 
 export class Island {
   constructor(spec, x, y) {
@@ -12,7 +12,7 @@ export class Island {
     this.x = x;
     this.y = y;
     this.seed = hashString(spec.login);
-    this.art = islandArt(this.seed % VARIANTS, spec.principal);
+    this.art = islandArt(this.seed % VARIANTS, spec.isMain);
     const { rx, ry } = this.art;
     this.spots = {
       center: { x: Math.round(rx * 0.08), y: Math.round(ry * 0.2) },
@@ -22,9 +22,9 @@ export class Island {
       workbench: { x: -Math.round(rx * 0.1), y: Math.round(ry * 0.5) },
       bottle: { x: rx - 16, y: Math.round(ry * 0.62) },
     };
-    this.castaway = new Castaway(spec.energia, this.spots);
+    this.castaway = new Castaway(spec.energy, this.spots);
     this.castaway.clock = (this.seed % 100) / 10;
-    this.upgrades = STAR_UPGRADES.filter((upgrade) => spec.estrelas >= upgrade.stars);
+    this.upgrades = STAR_UPGRADES.filter((upgrade) => spec.stars >= upgrade.stars);
     this.time = (this.seed % 500) / 100;
     this.drop = null;
     this.avatarImage = null;
@@ -124,7 +124,7 @@ export class Island {
         depth: y,
         paint: () => {
           blit(sprite, x - Math.floor(sprite.width / 2), y - sprite.height);
-          if (upgrade.sprite === 'fogueira') this.drawFlame(rect, x, y);
+          if (upgrade.sprite === 'campfire') this.drawFlame(rect, x, y);
         },
       });
     }
@@ -135,7 +135,7 @@ export class Island {
     layers.sort((a, b) => a.depth - b.depth).forEach((layer) => layer.paint());
 
     if (this.castaway.bottleOut) this.drawBottle(rect);
-    if (this.drop) this.drawDrop(blit, rect, sprites.caixote);
+    if (this.drop) this.drawDrop(blit, rect, sprites.crate);
     this.drawNameplate(ctx, S, originX, originY);
   }
 
@@ -241,7 +241,7 @@ export class Island {
     ctx.font = `${fontSize}px "VT323", monospace`;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
-    const label = spec.principal ? `★ ${spec.login}` : spec.login;
+    const label = spec.isMain ? `★ ${spec.login}` : spec.login;
     const avatarSize = 9 * S;
     const padding = 2 * S;
     const dotSize = 3 * S;
@@ -250,9 +250,9 @@ export class Island {
     const left = Math.round(originX * S - width / 2);
     const top = (originY + art.ry + 12) * S;
 
-    ctx.fillStyle = spec.principal ? 'rgba(90, 55, 15, 0.92)' : 'rgba(18, 37, 56, 0.88)';
+    ctx.fillStyle = spec.isMain ? 'rgba(90, 55, 15, 0.92)' : 'rgba(18, 37, 56, 0.88)';
     ctx.fillRect(left, top, width, height);
-    ctx.fillStyle = spec.principal ? '#f2c94c' : '#6fb7c9';
+    ctx.fillStyle = spec.isMain ? '#f2c94c' : '#6fb7c9';
     ctx.fillRect(left, top, width, Math.max(1, Math.floor(S / 2)));
 
     const avatarX = left + padding;
@@ -265,7 +265,7 @@ export class Island {
 
     ctx.fillStyle = '#f4ecd8';
     ctx.fillText(label, avatarX + avatarSize + padding, top + height / 2 + 1);
-    ctx.fillStyle = ENERGY_COLORS[spec.energia];
+    ctx.fillStyle = ENERGY_COLORS[spec.energy];
     ctx.fillRect(left + width - padding - dotSize, top + (height - dotSize) / 2, dotSize, dotSize);
   }
 }

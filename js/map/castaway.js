@@ -9,7 +9,7 @@ function between(min, max) {
 
 // Mapeia o nível de energia do JSON para as animações.
 export const ROUTINES = {
-  dormindo(c) {
+  sleeping(c) {
     return [
       { walk: c.spots.rest },
       { pose: 'sleep', seconds: between(9, 15), effect: 'zzz' },
@@ -17,7 +17,7 @@ export const ROUTINES = {
       { pose: 'sad', seconds: between(5, 8), face: -1 },
     ];
   },
-  pescando(c) {
+  fishing(c) {
     return [
       { walk: c.spots.shore },
       { pose: 'sit', seconds: between(9, 16), effect: 'fishing', face: 1 },
@@ -26,7 +26,7 @@ export const ROUTINES = {
       { pose: 'idle', seconds: between(1.5, 3) },
     ];
   },
-  trabalhando(c) {
+  working(c) {
     const fishBreak = Math.random() > 0.65;
     return [
       { walk: c.spots.workbench },
@@ -71,7 +71,7 @@ export class Castaway {
 
   nextStep() {
     if (this.queue.length === 0) {
-      const wantsBottle = this.energy !== 'dormindo' && Math.random() < BOTTLE_CHANCE;
+      const wantsBottle = this.energy !== 'sleeping' && Math.random() < BOTTLE_CHANCE;
       this.queue = [...(wantsBottle ? this.bottleSteps() : []), ...ROUTINES[this.energy](this)];
     }
     this.step = this.queue.shift();

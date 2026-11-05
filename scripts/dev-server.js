@@ -19,7 +19,7 @@ createServer(async (request, response) => {
   const relative = pathname === '/' ? 'index.html' : decodeURIComponent(pathname).slice(1);
   const file = normalize(join(ROOT, relative));
   try {
-    if (!file.startsWith(ROOT + sep)) throw new Error('fora da raiz');
+    if (!file.startsWith(ROOT + sep)) throw new Error('outside root');
     const body = await readFile(file);
     response.writeHead(200, {
       'content-type': TYPES[extname(file)] ?? 'application/octet-stream',
@@ -27,7 +27,7 @@ createServer(async (request, response) => {
     });
     response.end(body);
   } catch {
-    response.writeHead(404).end('Não encontrado');
+    response.writeHead(404).end('Not found');
   }
 }).listen(PORT, '127.0.0.1', () => {
   console.log(`Git Castaway em http://localhost:${PORT}`);

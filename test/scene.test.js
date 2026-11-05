@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { devOptions, profileUrl } from '../js/data.js';
+import { devOptions, profileUrl } from '../js/core/data.js';
 import {
   ACTIVITIES,
   SCENE_SPOTS,
@@ -8,14 +8,14 @@ import {
   pickActivity,
   pickVariant,
   routeTo,
-} from '../js/scene/activities.js';
+} from '../js/scene/activities/index.js';
 import { Actor } from '../js/scene/actor.js';
 import { POSES, blendPose, walkPose } from '../js/scene/poses.js';
-import { celestialBody, isNight, normalizeHour, paletteAt } from '../js/time.js';
-import { STAR_UPGRADES, hasUpgrade, nextUpgrade } from '../js/upgrades.js';
-import { cameraAfterZoom, clampScale, clampSceneCamera, fitScale, scaleLimits, stepScale, zoomPercent } from '../js/zoom.js';
+import { celestialBody, isNight, normalizeHour, paletteAt } from '../js/core/time.js';
+import { STAR_UPGRADES, hasUpgrade, nextUpgrade } from '../js/core/upgrades.js';
+import { cameraAfterZoom, clampScale, clampSceneCamera, fitScale, scaleLimits, stepScale, zoomPercent } from '../js/core/zoom.js';
 
-const ENERGIES = ['dormindo', 'pescando', 'trabalhando'];
+const ENERGIES = ['sleeping', 'fishing', 'working'];
 
 function fixedRandom() {
   let state = 7;
@@ -35,7 +35,7 @@ test('o botão do pop-up aponta para o perfil público, não para o repositório
 });
 
 test('opções de teste não existem em produção', () => {
-  const search = '?hora=21&cena=fish&visao=cena';
+  const search = '?hour=21&activity=fish&view=scene';
   assert.deepEqual(devOptions({ hostname: 'eduardobragamkt.github.io', search }), {});
   assert.equal(devOptions({ hostname: 'localhost', search }).hour, 21);
   assert.equal(devOptions({ hostname: 'localhost', search: '' }).hour, null);
@@ -71,24 +71,24 @@ test('o náufrago sem commits só dorme, fica triste, leva sustos ou lê uma gar
   const allowed = new Set(['sleep', 'sad', 'stretch', 'horizon', 'crabWake', 'bottle']);
   const random = fixedRandom();
   for (let i = 0; i < 400; i += 1) {
-    const name = pickActivity({ energy: 'dormindo', commits: 0, stars: 500, night: i % 2 === 0 }, [], random);
+    const name = pickActivity({ energy: 'sleeping', commits: 0, stars: 500, night: i % 2 === 0 }, [], random);
     assert.ok(allowed.has(name), name);
   }
 });
 
 test('a energia muda o peso de cada atividade', () => {
   const context = (energy) => ({ energy, commits: 3, stars: 0, night: false });
-  assert.ok(ACTIVITIES.fish.weight(context('pescando')) > ACTIVITIES.fish.weight(context('trabalhando')));
-  assert.ok(ACTIVITIES.hammer.weight(context('trabalhando')) > ACTIVITIES.hammer.weight(context('pescando')));
-  assert.equal(ACTIVITIES.dance.weight(context('pescando')), 0);
-  assert.ok(ACTIVITIES.dance.weight(context('trabalhando')) > 0);
+  assert.ok(ACTIVITIES.fish.weight(context('fishing')) > ACTIVITIES.fish.weight(context('working')));
+  assert.ok(ACTIVITIES.hammer.weight(context('working')) > ACTIVITIES.hammer.weight(context('fishing')));
+  assert.equal(ACTIVITIES.dance.weight(context('fishing')), 0);
+  assert.ok(ACTIVITIES.dance.weight(context('working')) > 0);
 });
 
 test('as últimas 3 atividades não se repetem', () => {
   const random = fixedRandom();
   const recent = [];
   for (let i = 0; i < 300; i += 1) {
-    const name = pickActivity({ energy: 'pescando', commits: 2, stars: 10, night: false }, recent, random);
+    const name = pickActivity({ energy: 'fishing', commits: 2, stars: 10, night: false }, recent, random);
     assert.ok(!recent.includes(name), `${name} em ${recent}`);
     recent.push(name);
     if (recent.length > 3) recent.shift();
@@ -97,14 +97,14 @@ test('as últimas 3 atividades não se repetem', () => {
 
 test('atividade acima de 25% do tempo sai do sorteio', () => {
   const random = fixedRandom();
-  const context = { energy: 'pescando', commits: 2, stars: 10, night: false };
+  const context = { energy: 'fishing', commits: 2, stars: 10, night: false };
   for (let i = 0; i < 200; i += 1) {
     assert.notEqual(pickActivity(context, [], random, { fish: 0.25 }), 'fish');
   }
 });
 
 test('nenhuma atividade domina a rotina de quem tem commits', () => {
-  for (const energy of ['pescando', 'trabalhando']) {
+  for (const energy of ['fishing', 'working']) {
     for (const night of [false, true]) {
       for (const stars of [0, 120]) {
         const actor = new Actor({ energy, commits: 4, stars, night: () => night, random: fixedRandom() });
@@ -120,7 +120,7 @@ test('nenhuma atividade domina a rotina de quem tem commits', () => {
 });
 
 test('de dia, coco e pesca aparecem bem mais que a bancada', () => {
-  const actor = new Actor({ energy: 'trabalhando', commits: 7, stars: 120, random: fixedRandom() });
+  const actor = new Actor({ energy: 'working', commits: 7, stars: 120, random: fixedRandom() });
   for (let t = 0; t < 4 * 3600; t += 0.1) actor.update(0.1);
   const { coconut, fish, hammer } = actor.timeSpent;
   assert.ok(coconut > hammer, `coco ${coconut} x bancada ${hammer}`);
@@ -128,7 +128,7 @@ test('de dia, coco e pesca aparecem bem mais que a bancada', () => {
 });
 
 test('a rotina tem abertura, pausas entre as ações e encerramento', () => {
-  const actor = new Actor({ energy: 'pescando', commits: 3, random: fixedRandom() });
+  const actor = new Actor({ energy: 'fishing', commits: 3, random: fixedRandom() });
   const sequence = [];
   for (let t = 0; t < 1800; t += 0.1) {
     actor.update(0.1);
@@ -178,7 +178,7 @@ test('atividades com pré-requisito respeitam estrelas e hora', () => {
   assert.equal(ACTIVITIES.warmHands.weight({ stars: 0, night: true }), 0);
   assert.ok(ACTIVITIES.warmHands.weight({ stars: 5, night: true }) > 0);
   assert.equal(ACTIVITIES.warmHands.weight({ stars: 5, night: false }), 0);
-  assert.equal(ACTIVITIES.stargaze.weight({ energy: 'pescando', night: false }), 0);
+  assert.equal(ACTIVITIES.stargaze.weight({ energy: 'fishing', night: false }), 0);
 });
 
 function runScript(actor, seconds) {
@@ -193,7 +193,7 @@ test('cada versão de cada atividade termina e usa apenas poses existentes', () 
     for (const variant of Object.keys(activity.variants)) {
       const label = `${name}/${variant}`;
       const actor = new Actor({
-        energy: 'pescando',
+        energy: 'fishing',
         fixedActivity: name,
         fixedVariant: variant,
         commits: 3,
@@ -208,7 +208,7 @@ test('cada versão de cada atividade termina e usa apenas poses existentes', () 
 });
 
 test('escalar a palmeira sempre termina no chão', () => {
-  const actor = new Actor({ energy: 'pescando', fixedActivity: 'coconut', fixedVariant: 'climb', random: fixedRandom() });
+  const actor = new Actor({ energy: 'fishing', fixedActivity: 'coconut', fixedVariant: 'climb', random: fixedRandom() });
   let highest = 0;
   for (let t = 0; t < 14; t += 0.05) {
     actor.update(0.05);
@@ -219,7 +219,7 @@ test('escalar a palmeira sempre termina no chão', () => {
 });
 
 test('uma interrupção durante a escalada não o deixa no ar', () => {
-  const actor = new Actor({ energy: 'pescando', fixedActivity: 'coconut', fixedVariant: 'climb', random: fixedRandom() });
+  const actor = new Actor({ energy: 'fishing', fixedActivity: 'coconut', fixedVariant: 'climb', random: fixedRandom() });
   for (let t = 0; t < 3.5; t += 0.05) actor.update(0.05);
   actor.interrupt(celebrateCrate());
   assert.equal(actor.lift, 0);
@@ -245,7 +245,7 @@ test('o sorteio não trava em horas longas com qualquer energia', () => {
 });
 
 test('a garrafa chega sozinha, é lida e a rotina continua', () => {
-  const actor = new Actor({ energy: 'pescando', fixedActivity: 'bottle', random: fixedRandom() });
+  const actor = new Actor({ energy: 'fishing', fixedActivity: 'bottle', random: fixedRandom() });
   const events = [];
   actor.onEvent = (event) => events.push(event);
   for (let t = 0; t < 14; t += 0.05) actor.update(0.05);
@@ -253,7 +253,7 @@ test('a garrafa chega sozinha, é lida e a rotina continua', () => {
 });
 
 test('a garrafa aparece como cena comum, sem dominar a rotina', () => {
-  const actor = new Actor({ energy: 'pescando', commits: 3, stars: 0, random: fixedRandom() });
+  const actor = new Actor({ energy: 'fishing', commits: 3, stars: 0, random: fixedRandom() });
   for (let t = 0; t < 4 * 3600; t += 0.1) actor.update(0.1);
   const total = Object.values(actor.timeSpent).reduce((sum, seconds) => sum + seconds, 0);
   assert.ok(actor.timeSpent.bottle > 0);
@@ -261,18 +261,18 @@ test('a garrafa aparece como cena comum, sem dominar a rotina', () => {
 });
 
 test('a caixa de suprimentos leva o náufrago até ela', () => {
-  const actor = new Actor({ energy: 'pescando', random: fixedRandom() });
+  const actor = new Actor({ energy: 'fishing', random: fixedRandom() });
   actor.interrupt(celebrateCrate());
   for (let elapsed = 0; elapsed < 4; elapsed += 0.05) actor.update(0.05);
   assert.deepEqual({ x: actor.x, y: actor.y }, SCENE_SPOTS.crate);
 });
 
 test('próxima melhoria segue a ordem de estrelas', () => {
-  assert.equal(nextUpgrade(0).sprite, 'caixote');
-  assert.equal(nextUpgrade(4).sprite, 'fogueira');
+  assert.equal(nextUpgrade(0).sprite, 'crate');
+  assert.equal(nextUpgrade(4).sprite, 'campfire');
   assert.equal(nextUpgrade(100), null);
-  assert.equal(hasUpgrade(5, 'fogueira'), true);
-  assert.equal(hasUpgrade(4, 'fogueira'), false);
+  assert.equal(hasUpgrade(5, 'campfire'), true);
+  assert.equal(hasUpgrade(4, 'campfire'), false);
   const thresholds = STAR_UPGRADES.map((upgrade) => upgrade.stars);
   assert.deepEqual(thresholds, [...thresholds].sort((a, b) => a - b));
 });

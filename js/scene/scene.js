@@ -1,18 +1,20 @@
 // Cena de tela cheia de uma ilha. Tudo é desenhado em um buffer de baixa resolução e
 // ampliado uma única vez, o que garante pixels nítidos em qualquer zoom.
 
-import { hashString, makeCanvas } from '../art.js';
-import { daysOnIsland } from '../calendar.js';
-import { isNight, paletteAt } from '../time.js';
-import { hasUpgrade } from '../upgrades.js';
-import { celebrateMilestone, celebrateCrate, SCENE_SPOTS } from './activities.js';
+import { hashString, makeCanvas } from '../map/map-art.js';
+import { daysOnIsland } from '../core/calendar.js';
+import { isNight, paletteAt } from '../core/time.js';
+import { hasUpgrade } from '../core/upgrades.js';
+import { celebrateMilestone, celebrateCrate, SCENE_SPOTS } from './activities/index.js';
 import { Actor } from './actor.js';
 import { Ambience } from './ambience.js';
 import { Backdrop } from './backdrop.js';
 import { pickBottleMessage } from './messages.js';
 import { gardenBlooms, gardenStage, raftStage } from './progress.js';
-import { drawGarden, drawRaft, drawRaftWreck } from './projects.js';
+import { drawGarden, drawRaft, drawRaftWreck } from './project-art.js';
 import { drawRig } from './rig.js';
+import { drawActorEffect } from './scene-effects.js';
+import { drawActorItem } from './scene-items.js';
 import { PROP_POSITIONS, buildIsland, buildPalm, buildProps, islandFront } from './scene-art.js';
 import { WorldEvents, paintCrab } from './world-events.js';
 
@@ -52,7 +54,7 @@ export class Scene {
     this.ambience = new Ambience(this, { dateFn, weatherOverride, tideOverride, holidayOverride });
     this.palette = null;
     this.backdrop = new Backdrop(this.seed, distantIslets);
-    this.islandArt = buildIsland(this.seed, spec.principal);
+    this.islandArt = buildIsland(this.seed, spec.isMain);
     this.props = buildProps();
     this.palms = [
       {
@@ -61,7 +63,7 @@ export class Scene {
         frames: [0, 0.03, 0.06].map((sway) => buildPalm(this.seed + 1, 82, sway)),
       },
     ];
-    if (spec.principal || this.seed % 2 === 0) {
+    if (spec.isMain || this.seed % 2 === 0) {
       this.palms.push({
         x: -48,
         y: 18,
@@ -69,9 +71,9 @@ export class Scene {
       });
     }
     this.actor = new Actor({
-      energy: spec.energia,
+      energy: spec.energy,
       commits: spec.commits3d,
-      stars: spec.estrelas,
+      stars: spec.stars,
       night: () => isNight(this.hourFn()),
       conditions: () => this.ambience.conditions(),
       onEvent: (event) => this.handleEvent(event),
@@ -173,7 +175,7 @@ export class Scene {
   }
 
   days() {
-    return daysOnIsland(this.spec.criadoEm, this.dateFn()) ?? 1;
+    return daysOnIsland(this.spec.createdAt, this.dateFn()) ?? 1;
   }
 
   drawRaftProject(g) {
@@ -190,7 +192,7 @@ export class Scene {
 
   // Marcas no poste: um risco por dia na ilha, agrupados de cinco em cinco.
   drawTally(g) {
-    const days = daysOnIsland(this.spec.criadoEm, this.dateFn());
+    const days = daysOnIsland(this.spec.createdAt, this.dateFn());
     if (!days) return;
     const x = -138 - this.view.left;
     const y = 46 - this.view.top;
@@ -214,7 +216,7 @@ export class Scene {
 
   dropCrate() {
     this.finishBottle();
-    const { x, y } = PROP_POSITIONS.caixote;
+    const { x, y } = PROP_POSITIONS.crate;
     this.drop = { x, y, height: 170, landed: 0 };
     this.actor.interrupt(celebrateCrate());
   }
@@ -426,21 +428,21 @@ export class Scene {
       });
     }
 
-    const stars = spec.estrelas;
-    const owned = ['caixote', 'barril', 'fogueira', 'bandeira', 'cabana', 'farol'].filter((name) => hasUpgrade(stars, name));
+    const stars = spec.stars;
+    const owned = ['crate', 'barrel', 'campfire', 'flag', 'hut', 'lighthouse'].filter((name) => hasUpgrade(stars, name));
     for (const name of owned) {
       layers.push({
         depth: PROP_POSITIONS[name].y,
         paint: () => {
           this.drawProp(g, name);
-          if (name === 'bandeira') this.drawFlagCloth(g);
-          if (name === 'fogueira') this.drawFlames(g);
+          if (name === 'flag') this.drawFlagCloth(g);
+          if (name === 'campfire') this.drawFlames(g);
         },
       });
     }
     layers.push({
-      depth: PROP_POSITIONS.bancada.y,
-      paint: () => (this.world.benchDown > 0 ? this.drawFallenBench(g) : this.drawProp(g, 'bancada')),
+      depth: PROP_POSITIONS.workbench.y,
+      paint: () => (this.world.benchDown > 0 ? this.drawFallenBench(g) : this.drawProp(g, 'workbench')),
     });
     layers.push({ depth: 46, paint: () => this.drawTally(g) });
     layers.push({
@@ -450,9 +452,9 @@ export class Scene {
     layers.push({ depth: this.world.raft.y, paint: () => this.drawRaftProject(g) });
     if (spec.commits3d > 0 || actor.commits > 0) {
       layers.push({
-        depth: PROP_POSITIONS.quadro.y,
+        depth: PROP_POSITIONS.commitSign.y,
         paint: () => {
-          this.drawProp(g, 'quadro');
+          this.drawProp(g, 'commitSign');
           this.drawCommitTiles(g);
           if (this.world.boardPainted) this.drawBoardPaint(g);
         },
@@ -479,7 +481,7 @@ export class Scene {
   }
 
   drawFallenBench(g) {
-    const { x, y } = PROP_POSITIONS.bancada;
+    const { x, y } = PROP_POSITIONS.workbench;
     const left = Math.round(x - 16 - this.view.left);
     const bottom = Math.round(y - this.view.top);
     g.fillStyle = '#3d2a1d';
@@ -492,8 +494,8 @@ export class Scene {
   }
 
   drawBoardPaint(g) {
-    const { x, y } = PROP_POSITIONS.quadro;
-    const sprite = this.props.quadro;
+    const { x, y } = PROP_POSITIONS.commitSign;
+    const sprite = this.props.commitSign;
     const left = Math.round(x - sprite.width / 2 - this.view.left) + 1;
     const top = Math.round(y - sprite.height - this.view.top) + 1;
     g.fillStyle = '#ea7a3a';
@@ -522,8 +524,8 @@ export class Scene {
     }
     const joints = drawRig(g, x, y, actor.facing, actor.pose, { mood: actor.mood, blink, time });
     g.restore();
-    this.drawItem(g, joints);
-    this.drawEffect(g, joints);
+    drawActorItem(this, g, joints);
+    drawActorEffect(this, g, joints);
     if (inSea) this.drawRipples(g, x, groundY, palette);
   }
 
@@ -609,234 +611,6 @@ export class Scene {
     }
   }
 
-  drawItem(g, joints) {
-    const { actor, view, time } = this;
-    const hand = { x: Math.round(joints.handFront.x), y: Math.round(joints.handFront.y) };
-    const f = actor.facing;
-    const rect = (x, y, w, h, color) => {
-      g.fillStyle = color;
-      g.fillRect(Math.round(x), Math.round(y), w, h);
-    };
-    const line = (x0, y0, x1, y1, color) => {
-      const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
-      g.fillStyle = color;
-      for (let i = 0; i <= steps; i += 1) {
-        g.fillRect(Math.round(x0 + ((x1 - x0) * i) / steps), Math.round(y0 + ((y1 - y0) * i) / steps), 1, 1);
-      }
-    };
-    if (actor.item === 'rod') {
-      const tipX = hand.x + f * 26;
-      const tipY = hand.y - 24;
-      line(hand.x - f * 3, hand.y + 3, tipX, tipY, '#54331f');
-      const bob = Math.round(Math.sin(time * 2.6) * 1.2);
-      const floatX = tipX + f * 14;
-      const floatY = 66 - view.top + bob;
-      line(tipX, tipY, floatX, floatY, '#f4ecd8');
-      rect(floatX - 1, floatY, 3, 2, '#d84f3f');
-      rect(floatX - 4, floatY + 3, 9, 1, '#d5f4f2');
-    }
-    if (actor.item === 'fish') {
-      const y = hand.y - 8 + Math.round(Math.sin(time * 9));
-      rect(hand.x - 1, y - 2, 2, 8, '#d5cbb3');
-      rect(hand.x - 6, y + 4, 12, 6, '#231a2b');
-      rect(hand.x - 5, y + 5, 10, 4, '#7fd0e8');
-      rect(hand.x - 5, y + 7, 10, 2, '#4f9fc0');
-      rect(hand.x + f * 6 - 1, y + 5, 3, 4, '#2f7fa8');
-      rect(hand.x - f * 3, y + 5, 2, 2, '#231a2b');
-    }
-    if (actor.item === 'hammer') {
-      const dx = f * Math.sin(joints.forearmAngle + 1.57);
-      const dy = Math.cos(joints.forearmAngle + 1.57);
-      const endX = hand.x + dx * 10;
-      const endY = hand.y + dy * 10;
-      line(hand.x, hand.y, endX, endY, '#54331f');
-      rect(endX - 4, endY - 2, 9, 4, '#231a2b');
-      rect(endX - 3, endY - 1, 7, 2, '#a09eaa');
-    }
-    if (actor.item === 'stick') {
-      line(hand.x, hand.y, hand.x + f * 7, hand.y - 7, '#54331f');
-    }
-    if (actor.item === 'boot') {
-      const y = hand.y - 3 + Math.round(Math.sin(time * 7));
-      line(hand.x, hand.y - 8, hand.x, y, '#f4ecd8');
-      rect(hand.x - 5, y, 8, 9, '#231a2b');
-      rect(hand.x - 5, y + 6, 13, 5, '#231a2b');
-      rect(hand.x - 4, y + 1, 6, 8, '#6f4a2a');
-      rect(hand.x - 4, y + 7, 11, 3, '#54331f');
-    }
-    if (actor.item === 'hook') {
-      line(hand.x, hand.y - 8, hand.x, hand.y + 5, '#f4ecd8');
-      rect(hand.x, hand.y + 5, 3, 1, '#a09eaa');
-      rect(hand.x + 3, hand.y + 3, 1, 3, '#a09eaa');
-    }
-    if (actor.item === 'stone') {
-      rect(hand.x - 2, hand.y - 2, 5, 5, '#231a2b');
-      rect(hand.x - 1, hand.y - 1, 3, 3, '#918f9c');
-    }
-    if (actor.item === 'cooking') {
-      const tipX = hand.x + f * 18;
-      const tipY = hand.y - 3;
-      line(hand.x, hand.y, tipX, tipY, '#54331f');
-      rect(tipX - 5, tipY - 3, 10, 5, '#231a2b');
-      rect(tipX - 4, tipY - 2, 8, 3, '#d98a4a');
-      if (Math.floor(time * 2) % 2 === 0) rect(tipX, tipY - 8, 1, 3, 'rgba(244, 236, 216, 0.7)');
-    }
-    if (actor.item === 'cooked') {
-      rect(hand.x - 5, hand.y - 4, 10, 5, '#231a2b');
-      rect(hand.x - 4, hand.y - 3, 8, 3, '#b8682e');
-    }
-    if (actor.item === 'book') {
-      const x = (hand.x + joints.handBack.x) / 2;
-      const y = (hand.y + joints.handBack.y) / 2;
-      rect(x - 7, y - 7, 14, 9, '#231a2b');
-      rect(x - 6, y - 6, 6, 7, '#2e5f8c');
-      rect(x, y - 6, 6, 7, '#3a74a8');
-      rect(x - 1, y - 6, 1, 7, '#f4ecd8');
-    }
-    if (actor.item === 'bookFace') {
-      rect(joints.head.x - 7, joints.head.y - 5, 14, 5, '#231a2b');
-      rect(joints.head.x - 6, joints.head.y - 4, 12, 3, '#2e5f8c');
-    }
-    if (actor.item === 'sticks') {
-      line(hand.x, hand.y, hand.x + f * 7, hand.y + 5, '#6f452a');
-      line(joints.handBack.x, joints.handBack.y, joints.handBack.x + f * 7, joints.handBack.y - 3, '#54331f');
-    }
-    if (actor.item === 'saw') {
-      rect(hand.x + (f > 0 ? 0 : -14), hand.y - 1, 14, 3, '#231a2b');
-      rect(hand.x + (f > 0 ? 1 : -13), hand.y, 12, 1, '#a09eaa');
-      rect(hand.x + (f > 0 ? -3 : 0), hand.y - 2, 3, 5, '#6f452a');
-    }
-    if (actor.item === 'plank') {
-      rect(hand.x - 13, hand.y - 3, 26, 4, '#231a2b');
-      rect(hand.x - 12, hand.y - 2, 24, 2, '#b98347');
-    }
-    if (actor.item === 'ruler') {
-      rect(hand.x + (f > 0 ? 0 : -14), hand.y - 1, 14, 2, '#f2c94c');
-      for (let mark = 0; mark < 14; mark += 3) rect(hand.x + (f > 0 ? mark : -mark), hand.y - 1, 1, 1, '#231a2b');
-    }
-    if (actor.item === 'brush') {
-      line(hand.x, hand.y, hand.x + f * 6, hand.y - 6, '#6f452a');
-      rect(hand.x + f * 6 - 1, hand.y - 9, 3, 3, '#ea7a3a');
-    }
-    if (actor.item === 'spyglass' || actor.item === 'spyglassBackwards') {
-      const eyeX = joints.head.x + f * 6;
-      const eyeY = joints.head.y + 1;
-      line(eyeX, eyeY, hand.x, hand.y, '#54331f');
-      const wide = actor.item === 'spyglass';
-      rect(eyeX + (f > 0 ? 0 : -14), eyeY - (wide ? 1 : 2), 14, wide ? 3 : 5, '#231a2b');
-      rect(eyeX + (f > 0 ? 1 : -13), eyeY - (wide ? 0 : 1), 12, wide ? 1 : 3, '#c9934d');
-    }
-    if (actor.item === 'wateringCan') {
-      rect(hand.x - 5, hand.y - 2, 10, 7, '#231a2b');
-      rect(hand.x - 4, hand.y - 1, 8, 5, '#7f93ad');
-      line(hand.x + f * 5, hand.y + 1, hand.x + f * 11, hand.y - 3, '#5f7288');
-    }
-    if (actor.item === 'shell') {
-      rect(hand.x - 3, hand.y - 4, 7, 5, '#231a2b');
-      rect(hand.x - 2, hand.y - 3, 5, 3, '#ffd9c8');
-    }
-    if (actor.item === 'coconut') {
-      this.drawCoconut(g, hand.x + view.left, hand.y - 2 + view.top);
-    }
-    if (actor.item === 'paper') {
-      const x = (hand.x + joints.handBack.x) / 2;
-      const y = (hand.y + joints.handBack.y) / 2;
-      rect(x - 7, y - 9, 14, 11, '#231a2b');
-      rect(x - 6, y - 8, 12, 9, '#f4ecd8');
-      rect(x - 4, y - 6, 8, 1, '#9aa3b2');
-      rect(x - 4, y - 4, 8, 1, '#9aa3b2');
-      rect(x - 4, y - 2, 5, 1, '#9aa3b2');
-    }
-  }
-
-  drawEffect(g, joints) {
-    const { actor, time } = this;
-    const head = joints.head;
-    this.ambience.drawHat(g, head);
-    if (actor.effect === 'ink') {
-      g.fillStyle = '#231a2b';
-      g.fillRect(Math.round(head.x) - 5, Math.round(head.y) - 3, 10, 4);
-      g.fillRect(Math.round(head.x) - 3, Math.round(head.y) + 1, 6, 3);
-    }
-    if (actor.effect === 'dust') {
-      g.fillStyle = '#e7d9b6';
-      for (let i = 0; i < 4; i += 1) {
-        const drift = (time * 1.7 + i * 0.25) % 1;
-        g.fillRect(
-          Math.round(joints.handFront.x + actor.facing * (4 + drift * 14)),
-          Math.round(joints.handFront.y + drift * 12 - 4 + i),
-          2,
-          1,
-        );
-      }
-    }
-    if (actor.effect === 'zzz') {
-      for (let i = 0; i < 3; i += 1) {
-        const rise = (time * 0.7 + i * 0.33) % 1;
-        const size = 2 + i;
-        const x = Math.round(head.x + 6 + rise * 12 + Math.sin(time + i) * 2);
-        const y = Math.round(head.y - 8 - rise * 26);
-        g.globalAlpha = 1 - rise;
-        g.fillStyle = '#f4ecd8';
-        g.fillRect(x, y, size + 1, 1);
-        g.fillRect(x + Math.floor(size / 2), y + 1, 1, Math.max(1, size - 1));
-        g.fillRect(x, y + size, size + 1, 1);
-      }
-      g.globalAlpha = 1;
-    }
-    if (actor.effect === 'notes') {
-      for (let i = 0; i < 2; i += 1) {
-        const rise = (time * 0.8 + i * 0.5) % 1;
-        const x = Math.round(head.x + (i ? -13 : 11) + Math.sin(time * 3 + i) * 3);
-        const y = Math.round(head.y - 8 - rise * 18);
-        g.globalAlpha = 1 - rise;
-        g.fillStyle = '#ffe37a';
-        g.fillRect(x, y, 1, 5);
-        g.fillRect(x + 1, y, 2, 1);
-        g.fillRect(x - 2, y + 4, 3, 2);
-      }
-      g.globalAlpha = 1;
-    }
-    if (actor.effect === 'stars') {
-      for (let i = 0; i < 3; i += 1) {
-        const angle = time * 5 + (i * Math.PI * 2) / 3;
-        const x = Math.round(head.x + Math.cos(angle) * 10);
-        const y = Math.round(head.y - 11 + Math.sin(angle) * 3);
-        g.fillStyle = '#ffe37a';
-        g.fillRect(x - 1, y, 3, 1);
-        g.fillRect(x, y - 1, 1, 3);
-      }
-    }
-    if (actor.effect === 'sweat') {
-      const drop = (time * 1.6) % 1;
-      const side = actor.facing * -8;
-      g.globalAlpha = 1 - drop;
-      g.fillStyle = '#8dd3e8';
-      g.fillRect(Math.round(head.x + side), Math.round(head.y - 5 + drop * 12), 2, 3);
-      g.globalAlpha = 1;
-    }
-    if (actor.effect === 'angry') {
-      const puff = Math.floor(time * 4) % 2;
-      g.fillStyle = '#d84f3f';
-      g.fillRect(Math.round(head.x) + 6, Math.round(head.y) - 12 - puff, 5, 1);
-      g.fillRect(Math.round(head.x) + 8, Math.round(head.y) - 14 - puff, 1, 5);
-    }
-    if (actor.effect === 'splash') {
-      g.fillStyle = '#d5f4f2';
-      for (let i = 0; i < 5; i += 1) {
-        const rise = (time * 1.5 + i * 0.21) % 1;
-        const x = Math.round(head.x + (i - 2) * 8);
-        const y = Math.round(head.y + 28 - Math.sin(rise * Math.PI) * 14);
-        g.fillRect(x, y, 2, 2);
-      }
-    }
-    if (actor.mood === 'surprised') {
-      g.fillStyle = '#ffffff';
-      g.fillRect(Math.round(head.x) - 1, Math.round(head.y) - 16, 2, 5);
-      g.fillRect(Math.round(head.x) - 1, Math.round(head.y) - 10, 2, 2);
-    }
-  }
-
   drawCoconut(g, worldX, worldY) {
     const x = Math.round(worldX - this.view.left);
     const y = Math.round(worldY - this.view.top);
@@ -850,8 +624,8 @@ export class Scene {
   }
 
   drawFlagCloth(g) {
-    const { x, y } = PROP_POSITIONS.bandeira;
-    const sprite = this.props.bandeira;
+    const { x, y } = PROP_POSITIONS.flag;
+    const sprite = this.props.flag;
     const originX = Math.round(x - sprite.width / 2 - this.view.left) + 5;
     const originY = Math.round(y - sprite.height - this.view.top) + 2;
     for (let column = 0; column < 28; column += 1) {
@@ -875,7 +649,7 @@ export class Scene {
   }
 
   drawFlames(g) {
-    const { x, y } = PROP_POSITIONS.fogueira;
+    const { x, y } = PROP_POSITIONS.campfire;
     const left = x - this.view.left;
     const base = y - this.view.top - 6;
     const beat = this.time * 10;
@@ -895,8 +669,8 @@ export class Scene {
   }
 
   drawCommitTiles(g) {
-    const { x, y } = PROP_POSITIONS.quadro;
-    const sprite = this.props.quadro;
+    const { x, y } = PROP_POSITIONS.commitSign;
+    const sprite = this.props.commitSign;
     const left = Math.round(x - sprite.width / 2 - this.view.left) + 3;
     const top = Math.round(y - sprite.height - this.view.top) + 4;
     const shades = ['#0e4429', '#006d32', '#26a641', '#39d353'];
@@ -953,7 +727,7 @@ export class Scene {
 
   drawDrop(g) {
     const { x, y, height, landed } = this.drop;
-    const sprite = this.props.caixote;
+    const sprite = this.props.crate;
     const left = Math.round(x - sprite.width / 2 - this.view.left);
     const top = Math.round(y - sprite.height - height - this.view.top);
     if (height > 0) {
@@ -1003,23 +777,23 @@ export class Scene {
       g.restore();
     };
     const { spec } = this;
-    if (hasUpgrade(spec.estrelas, 'fogueira')) {
-      const { x, y } = PROP_POSITIONS.fogueira;
+    if (hasUpgrade(spec.stars, 'campfire')) {
+      const { x, y } = PROP_POSITIONS.campfire;
       const flicker = Math.round(Math.sin(this.time * 9) * 1.5);
       glow(x, y - 8, 40 + flicker, 0.07);
       glow(x, y - 8, 24 + flicker, 0.09);
       this.drawFlames(g);
     }
-    if (hasUpgrade(spec.estrelas, 'cabana')) {
-      const { x, y } = PROP_POSITIONS.cabana;
+    if (hasUpgrade(spec.stars, 'hut')) {
+      const { x, y } = PROP_POSITIONS.hut;
       g.globalAlpha = strength;
       g.fillStyle = '#ffd86b';
       g.fillRect(x - 36 + 15 - left, y - 58 + 34 - top, 9, 9);
       g.fillRect(x - 36 + 48 - left, y - 58 + 34 - top, 9, 9);
       g.globalAlpha = 1;
     }
-    if (hasUpgrade(spec.estrelas, 'farol')) {
-      const { x, y } = PROP_POSITIONS.farol;
+    if (hasUpgrade(spec.stars, 'lighthouse')) {
+      const { x, y } = PROP_POSITIONS.lighthouse;
       const lampX = x - left;
       const lampY = y - 92 + 13 - top;
       g.globalAlpha = strength;

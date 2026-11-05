@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { BOTTLE_MESSAGES } from '../js/scene/messages.js';
-import { STAR_UPGRADES } from '../js/upgrades.js';
+import { STAR_UPGRADES } from '../js/core/upgrades.js';
 import {
   energyLevel,
   isRateLimited,
@@ -20,10 +20,10 @@ function repo(login, forksCount = 0) {
 }
 
 test('energia tem três níveis', () => {
-  assert.equal(energyLevel(0), 'dormindo');
-  assert.equal(energyLevel(1), 'pescando');
-  assert.equal(energyLevel(4), 'pescando');
-  assert.equal(energyLevel(5), 'trabalhando');
+  assert.equal(energyLevel(0), 'sleeping');
+  assert.equal(energyLevel(1), 'fishing');
+  assert.equal(energyLevel(4), 'fishing');
+  assert.equal(energyLevel(5), 'working');
 });
 
 test('a busca cobre os últimos 3 dias e ignora datas no futuro', () => {
@@ -96,7 +96,7 @@ test('a ilha de um fork guarda só dados públicos, sem link para página de ter
     has_pages: true,
   });
   assert.equal('pagesUrl' in base, false);
-  assert.equal(base.estrelas, 2);
+  assert.equal(base.stars, 2);
 });
 
 test('forks inéditos têm prioridade no lote de atualização', () => {
@@ -119,8 +119,8 @@ test('a janela rotativa visita todos os forks ao longo do tempo', () => {
 });
 
 test('mudança só no carimbo de data não conta como mudança', () => {
-  assert.equal(sameContent({ geradoEm: 'a', forks: [] }, { geradoEm: 'b', forks: [] }), true);
-  assert.equal(sameContent({ geradoEm: 'a', forks: [] }, { geradoEm: 'a', forks: [1] }), false);
+  assert.equal(sameContent({ generatedAt: 'a', forks: [] }, { generatedAt: 'b', forks: [] }), true);
+  assert.equal(sameContent({ generatedAt: 'a', forks: [] }, { generatedAt: 'a', forks: [1] }), false);
   assert.equal(sameContent(null, { forks: [] }), false);
 });
 

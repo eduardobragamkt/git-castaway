@@ -246,12 +246,12 @@ let decorationCache = null;
 
 export function decorationSprites() {
   decorationCache ??= {
-    caixote: crate(),
-    barril: barrel(),
-    fogueira: campfire(),
-    bandeira: flag(),
-    cabana: hut(),
-    farol: lighthouse(),
+    crate: crate(),
+    barrel: barrel(),
+    campfire: campfire(),
+    flag: flag(),
+    hut: hut(),
+    lighthouse: lighthouse(),
   };
   return decorationCache;
 }

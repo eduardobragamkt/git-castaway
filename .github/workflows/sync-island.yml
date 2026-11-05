@@ -31,25 +31,25 @@ jobs:
         with:
           node-version: 24
 
-      - name: Testar regras
+      - name: Run tests
         run: npm test
 
-      - name: Atualizar arquipelago.json
+      - name: Update archipelago.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Estrelas e forks precisam aparecer logo, então atualizam menos ilhas.
           FORK_REFRESH_BUDGET: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '120' || '20' }}
         run: node scripts/update-data.js
 
-      - name: Publicar mudanças
+      - name: Publish changes
         run: |
-          if git diff --quiet -- data/arquipelago.json; then
-            echo "Nada para publicar."
+          if git diff --quiet -- data/archipelago.json; then
+            echo "Nothing to publish."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/arquipelago.json
-          git commit -m "chore(ilha): sincroniza o arquipélago"
+          git add data/archipelago.json
+          git commit -m "chore(data): sync archipelago"
           git pull --rebase origin main
           git push origin HEAD:main

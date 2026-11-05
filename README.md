@@ -1,50 +1,50 @@
 # Git Castaway
 
-Um arquipélago vivo em pixel art, movido pela atividade pública do GitHub. Cada fork vira uma ilha, e cada náufrago vive de acordo com os commits públicos do seu dono.
+A living pixel art archipelago powered by public GitHub activity. Every fork becomes an island, and every castaway lives according to their owner's public commits.
 
-**Jogue:** https://eduardobragamkt.github.io/git-castaway/
+**Play:** https://eduardobragamkt.github.io/git-castaway/
 
-Personagem, arte e código são originais. O projeto é uma homenagem ao gênero de "ilhas de área de trabalho" dos anos 90, sem usar assets de nenhum outro jogo ou protetor de tela.
+The character, art and code are original. The project is a tribute to the "desktop island" genre of the 90s and uses no assets from any other game or screensaver.
 
-## Como jogar
+## How to play
 
-| Ação no GitHub | O que acontece no jogo |
+| Action on GitHub | What happens in the game |
 | --- | --- |
-| Commits públicos nos últimos 3 dias | 0: dorme ou fica triste. 1 a 4: pesca com calma. 5 ou mais: trabalha a todo vapor. |
-| Dar uma estrela | Cai uma caixa de suprimentos, e a ilha ganha melhorias: 1, 3, 5, 10, 25 e 100 estrelas. |
-| [Dar um fork](https://github.com/eduardobragamkt/git-castaway/fork) | Nasce uma nova ilha no arquipélago. |
+| Public commits in the last 3 days | 0: sleeps or feels down. 1 to 4: fishes calmly. 5 or more: works at full steam. |
+| Star the repository | A supply crate drops, and the island gains upgrades at 1, 3, 5, 10, 25 and 100 stars. |
+| [Fork the repository](https://github.com/eduardobragamkt/git-castaway/fork) | A new island appears in the archipelago. |
 
-## Como explorar
+## Exploring
 
-- **Mapa do arquipélago:** arraste para navegar e clique em uma ilha para entrar na cena dela.
-- **Cena da ilha:** um quadro de tela cheia que segue o horário local do visitante, do amanhecer à noite.
-- **Personagem:** clique no náufrago para ver energia, estrelas, próxima melhoria e o perfil público do dono da ilha no GitHub.
-- **Zoom e tela cheia:** use o menu da tela, a roda do mouse, o gesto de pinça ou as teclas `+`, `-` e `0`. O botão de tela cheia não aparece em navegadores sem esse recurso, como o do iPhone.
-- **Abertura:** toca na primeira visita. Qualquer tecla, clique ou toque pula, e o botão "Intro" repete.
-- **Idioma:** inglês por padrão, com os botões `EN | PT` no painel do título. A escolha fica guardada no navegador.
-- **Endereço de cada ilha:** `https://eduardobragamkt.github.io/git-castaway/?ilha=login`.
+- **Archipelago map:** drag to move around and click an island to enter its scene.
+- **Island scene:** a full-screen view that follows the visitor's local time, from dawn to night.
+- **Character:** click the castaway to see energy, stars, the next upgrade and the island owner's public GitHub profile.
+- **Zoom and full screen:** use the on-screen menu, the mouse wheel, a pinch gesture or the `+`, `-` and `0` keys. The full-screen button is hidden in browsers without that feature, such as the one on iPhone.
+- **Intro:** plays on the first visit. Any key, click or tap skips it, and the "Intro" button replays it.
+- **Language:** English by default, with `EN | PT` buttons on the title panel. The choice is saved in the browser.
+- **Island address:** `https://eduardobragamkt.github.io/git-castaway/?ilha=login`.
 
-Sem mexer no mouse por alguns segundos, os painéis somem e sobra só a ilha.
+After a few seconds without moving the mouse, the panels fade and only the island remains.
 
-## A vida na ilha
+## Life on the island
 
-O náufrago sorteia dezenas de cenas conforme commits, hora, estrelas, clima e maré: pesca, coco, mergulho, fogo, leitura, pedidos de ajuda que nunca funcionam, visitantes, invasão de bugs, `merge conflict` entre caranguejos e garrafas que chegam do mar, com mensagens em português e inglês.
+The castaway picks from dozens of scenes based on commits, time of day, stars, weather and tide: fishing, coconuts, diving, fire, reading, calls for help that never work, visitors, bug invasions, a `merge conflict` between crabs, and bottles that arrive from the sea with messages in English and Portuguese.
 
-A ilha também tem chuva e calor, maré que sobe e desce, datas comemorativas e marcos reais do repositório, como a primeira estrela e o aniversário. Tudo vem de dados públicos e do relógio do visitante, então qualquer fork funciona sem configuração.
+The island also has rain and heat, a rising and falling tide, holidays and real repository milestones, such as the first star and the anniversary. Everything comes from public data and the visitor's clock, so any fork works without configuration.
 
-Com o tempo, cada ilha ganha um jardim, que cresce com os dias e floresce com commits públicos, e uma jangada que nunca fica pronta: no teste, ela sempre afunda, e ele recomeça. O náufrago nunca sai da ilha.
+Over time, each island grows a garden, which follows the days and blooms with public commits, and a raft that is never finished: it always sinks during the test, and he starts over. The castaway never leaves the island.
 
-## Sua própria ilha
+## Your own island
 
-1. Entre na sua conta do GitHub.
-2. Dê um [fork neste repositório](https://github.com/eduardobragamkt/git-castaway/fork).
-3. Em poucos minutos, sua ilha aparece no arquipélago, sem mais nenhuma configuração.
+1. Sign in to your GitHub account.
+2. [Fork this repository](https://github.com/eduardobragamkt/git-castaway/fork).
+3. In a few minutes, your island appears in the archipelago, with no further setup.
 
-O jogo tem uma única URL pública. Forks diretos aparecem logo após a sincronização, e forks de forks entram na sincronização agendada, em até 6 horas. Se alguém ativar o GitHub Pages no fork, a página leva à ilha dessa pessoa na URL principal.
+The game has a single public URL. Direct forks appear right after the next sync, and forks of forks join on the scheduled sync, within 6 hours. If someone enables GitHub Pages on a fork, that page leads to their island on the main URL.
 
-## Desenvolvimento
+## Development
 
-Requer Node.js 20 ou superior. O projeto não tem dependências.
+Requires Node.js 20 or later. The project has no dependencies.
 
 ```bash
 npm test
@@ -54,35 +54,53 @@ npm test
 npm run dev
 ```
 
-Parâmetros de teste em `http://localhost:4173`:
+Test parameters at `http://localhost:4173`:
 
-| Parâmetro | Efeito |
+| Parameter | Effect |
 | --- | --- |
-| `?dados=test/fixtures/demo.json` | Carrega um arquipélago de exemplo |
-| `?ilha=login` | Abre a ilha daquele usuário; funciona também na URL pública |
-| `?visao=cena` ou `?visao=mapa` | Força a visão inicial |
-| `?hora=21` | Fixa o horário do céu e da luz |
-| `?cena=coconut` | Repete uma atividade do náufrago (veja `js/scene/activities.js`) |
-| `?cena=coconut&variante=stone` | Repete uma versão específica da atividade |
-| `?data=2026-12-25T21:00` | Simula uma data, útil para as datas comemorativas |
-| `?clima=chuva` ou `?clima=calor` | Força o clima |
-| `?mare=0` | Força a maré: de `0` (baixa) a `1` (alta) |
-| `?abertura=1` | Toca a abertura mesmo em visitas seguintes |
+| `?data=test/fixtures/demo.json` | Loads a sample archipelago |
+| `?ilha=login` | Opens that user's island; also works on the public URL |
+| `?view=scene` or `?view=map` | Forces the initial view |
+| `?hour=21` | Sets the time of the sky and light |
+| `?activity=coconut` | Repeats one castaway activity (see `js/scene/activities/index.js`) |
+| `?activity=coconut&variant=stone` | Repeats a specific version of the activity |
+| `?date=2026-12-25T21:00` | Simulates a date, useful for holidays |
+| `?weather=rain` or `?weather=heat` | Forces the weather |
+| `?tide=0` | Forces the tide, from `0` (low) to `1` (high) |
+| `?intro=1` | Plays the intro even on later visits |
 
-Os parâmetros `dados`, `visao`, `hora`, `cena`, `variante`, `data`, `clima`, `mare` e `abertura` só funcionam em ambiente local.
+All of these except `?ilha=` work only in the local environment.
 
 ```text
-data/arquipelago.json        estado do jogo, gerado pelo workflow
-js/i18n.js                   textos da interface em inglês e português
-js/scene/messages.js         catálogo de mensagens das garrafas
-scripts/update-data.js       coleta os dados na API do GitHub
-.github/workflows/           sincronização por cron e por eventos
-js/                          mapa, câmera, zoom e ciclo de 24 horas
-js/scene/                    cena de tela cheia: céu, mar, esqueleto e atividades
+data/archipelago.json     game state, generated by the workflow
+js/main.js                app flow: camera, panels, pop-ups and frame loop
+js/core/                  data, texts, calendar, time, upgrades, zoom and intro rules
+js/map/                   archipelago map: islands, ocean, layout and sprites
+js/scene/                 full-screen scene: sky, sea, rig, props and effects
+js/scene/activities/      castaway scripts, grouped by theme
+scripts/update-data.js    collects the data from the GitHub API
+.github/workflows/        sync on a schedule and on repository events
+test/                     Node test suite and fixtures
 ```
 
-## Limites conhecidos
+Texts shown to the public live in `js/core/i18n.js` and `js/scene/messages.js`, always in both languages.
 
-- A atividade vem da busca de commits do GitHub, que conta commits públicos indexados. Repositórios privados e commits fora da branch padrão não aparecem, e a indexação pode atrasar.
-- O arquipélago mostra até 1000 forks, com até 3 níveis de forks de forks. A busca tem limite de requisições, então a atividade é atualizada em lotes: 120 forks em execuções agendadas e 20 nas causadas por estrelas ou forks. Uma rodada completa com 1000 forks pode levar cerca de dois dias.
-- O GitHub Pages pode levar alguns minutos para publicar cada atualização.
+### Syncing the data
+
+`data/archipelago.json` is generated only by the `sync-island.yml` workflow, using its limited `GITHUB_TOKEN`.
+
+**Do not run `scripts/update-data.js` with a personal token and publish the result.** A personal token can see your private activity, and those counts would become public in the file.
+
+## Known limits
+
+- Activity comes from GitHub's commit search, which counts indexed public commits. Private repositories and commits outside the default branch do not appear, and indexing can lag.
+- The archipelago shows up to 1000 forks, with up to 3 levels of forks of forks. Search is rate limited, so activity updates in batches: 120 forks on scheduled runs and 20 on runs triggered by stars or forks. A full round with 1000 forks can take about two days.
+- GitHub Pages can take a few minutes to publish each update.
+
+## Em português
+
+Git Castaway é um arquipélago vivo em pixel art, movido pela atividade pública do GitHub. Cada fork vira uma ilha, e o náufrago de cada uma vive de acordo com os commits públicos do dono. Para ter a sua, basta dar um [fork neste repositório](https://github.com/eduardobragamkt/git-castaway/fork): não é preciso nenhuma configuração. O jogo está em inglês por padrão e tem os botões `EN | PT` no painel do título.
+
+## License
+
+The code and original art in this repository are available under the [MIT License](LICENSE). The license grants no rights to any third-party name, trademark or work that inspired the project.

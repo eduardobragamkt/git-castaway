@@ -28,17 +28,17 @@ globalThis.document = {
 };
 
 const { Scene } = await import('../js/scene/scene.js');
-const { ACTIVITIES } = await import('../js/scene/activities.js');
+const { ACTIVITIES } = await import('../js/scene/activities/index.js');
 
 function makeScene(options = {}, spec = {}) {
   return new Scene(
     {
       login: 'maria-dev',
-      principal: true,
-      energia: 'trabalhando',
+      isMain: true,
+      energy: 'working',
       commits3d: 12,
-      estrelas: 120,
-      criadoEm: '2026-01-01T00:00:00Z',
+      stars: 120,
+      createdAt: '2026-01-01T00:00:00Z',
       ...spec,
     },
     { hourFn: () => options.hour ?? 12, distantIslets: 4, ...options },
@@ -73,7 +73,7 @@ test('todas as datas e horários desenham decoração, céu e chapéu sem erro',
 });
 
 test('clima e maré são desenhados sem erro', () => {
-  for (const weatherOverride of ['chuva', 'calor', 'limpo']) {
+  for (const weatherOverride of ['rain', 'heat', 'clear']) {
     for (const tideOverride of [0, 0.5, 1]) {
       const scene = makeScene({ weatherOverride, tideOverride });
       assert.doesNotThrow(() => play(scene, 6), `${weatherOverride}, maré ${tideOverride}`);
@@ -82,13 +82,13 @@ test('clima e maré são desenhados sem erro', () => {
 });
 
 test('ilha nova, sem data nem estrelas, também funciona', () => {
-  const scene = makeScene({}, { estrelas: 0, commits3d: 0, energia: 'dormindo', criadoEm: null, principal: false });
+  const scene = makeScene({}, { stars: 0, commits3d: 0, energy: 'sleeping', createdAt: null, isMain: false });
   assert.doesNotThrow(() => play(scene, 40));
 });
 
 test('uma data comemorativa escolhe o chapéu sem afetar a rotina', () => {
   const scene = makeScene({ dateFn: () => new Date('2027-12-24T12:00:00') });
-  assert.equal(scene.ambience.holiday, 'natal');
+  assert.equal(scene.ambience.holiday, 'christmas');
 });
 
 test('a garrafa abre o balão com mensagem nos dois idiomas e o fecha', () => {
@@ -105,8 +105,8 @@ test('a garrafa abre o balão com mensagem nos dois idiomas e o fecha', () => {
 
 test('a jangada e o jardim são desenhados em todos os estágios', () => {
   for (const days of [1, 4, 8, 11, 14, 20, 40, 90]) {
-    const criadoEm = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-    const scene = makeScene({}, { criadoEm });
+    const createdAt = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const scene = makeScene({}, { createdAt });
     assert.doesNotThrow(() => play(scene, 2), `dia ${days}`);
   }
 });
@@ -143,7 +143,7 @@ test('marco do repositório entrega balão na ordem certa', () => {
 test('todos os visitantes chegam e vão embora', () => {
   const scene = makeScene({ fixedActivity: 'stretch' });
   play(scene, 0.2);
-  for (const type of ['aviao', 'balao', 'golfinhos', 'tartaruga', 'baleia', 'revoada']) {
+  for (const type of ['plane', 'balloon', 'dolphins', 'turtle', 'whale', 'flock']) {
     scene.world.handle(`visitor:${type}`);
   }
   assert.equal(scene.world.visitors.length, 6);

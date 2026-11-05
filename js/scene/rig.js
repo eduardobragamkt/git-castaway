@@ -1,6 +1,6 @@
 // Desenha o náufrago da cena a partir do esqueleto, em pixels, com contorno escuro.
 
-import { makeCanvas } from '../art.js';
+import { makeCanvas } from '../map/map-art.js';
 
 const OUTLINE = '#231a2b';
 const SKIN = '#9a6443';

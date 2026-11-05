@@ -9,9 +9,9 @@ export const REFRESH_SLOT_MS = 6 * 60 * 60 * 1000;
 export const SEARCH_INTERVAL_MS = 2100;
 
 export function energyLevel(commits) {
-  if (commits <= 0) return 'dormindo';
-  if (commits < 5) return 'pescando';
-  return 'trabalhando';
+  if (commits <= 0) return 'sleeping';
+  if (commits < 5) return 'fishing';
+  return 'working';
 }
 
 // A busca conta commits públicos pela autoria, inclusive os enviados por merge na
@@ -90,14 +90,14 @@ export function toForkBase(repo) {
     avatar: repo.owner.avatar_url ?? '',
     repo: repo.name,
     url: repo.html_url,
-    criadoEm: repo.created_at,
-    estrelas: repo.stargazers_count ?? 0,
+    createdAt: repo.created_at,
+    stars: repo.stargazers_count ?? 0,
   };
 }
 
 // Compara ignorando o carimbo de data, para não gerar commit sem mudança real.
 export function sameContent(previous, next) {
   if (!previous) return false;
-  const strip = ({ geradoEm, ...rest }) => rest;
+  const strip = ({ generatedAt, ...rest }) => rest;
   return JSON.stringify(strip(previous)) === JSON.stringify(strip(next));
 }

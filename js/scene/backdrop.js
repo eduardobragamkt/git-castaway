@@ -1,8 +1,8 @@
 // Céu, astros, nuvens, aves e mar da cena. As faixas de cor usam pontilhado (dither)
 // para que as transições continuem parecendo pixel art.
 
-import { makeCanvas, seededRandom } from '../art.js';
-import { celestialBody, mixColor } from '../time.js';
+import { makeCanvas, seededRandom } from '../map/map-art.js';
+import { celestialBody, mixColor } from '../core/time.js';
 
 const TILE_WIDTH = 64;
 const SKY_HEIGHT = 320;

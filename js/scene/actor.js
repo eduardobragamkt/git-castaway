@@ -11,7 +11,7 @@ import {
   pickActivity,
   pickVariant,
   routeTo,
-} from './activities.js';
+} from './activities/index.js';
 import { POSES, blendPose, walkPose } from './poses.js';
 
 const WALK_SPEED = 30;
@@ -48,7 +48,7 @@ export class Actor {
     this.facing = 1;
     this.item = null;
     this.effect = null;
-    this.mood = energy === 'dormindo' ? 'sleepy' : 'calm';
+    this.mood = energy === 'sleeping' ? 'sleepy' : 'calm';
     this.pose = POSES.stand;
     this.lift = 0;
     this.task = null;

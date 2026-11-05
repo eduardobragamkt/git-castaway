@@ -1,6 +1,6 @@
 // Arte original da ilha em vista lateral, gerada por código.
 
-import { makeCanvas, seededRandom } from '../art.js';
+import { makeCanvas, seededRandom } from '../map/map-art.js';
 
 const ISLAND_RX = 152;
 const OX = 176;
@@ -309,25 +309,25 @@ function commitSign() {
 
 export function buildProps() {
   return {
-    caixote: crate(),
-    barril: barrel(),
-    fogueira: firePit(),
-    bandeira: flag(),
-    cabana: hut(),
-    farol: lighthouse(),
-    bancada: workbench(),
-    quadro: commitSign(),
+    crate: crate(),
+    barrel: barrel(),
+    campfire: firePit(),
+    flag: flag(),
+    hut: hut(),
+    lighthouse: lighthouse(),
+    workbench: workbench(),
+    commitSign: commitSign(),
   };
 }
 
 // Posição de cada objeto na cena: x, y dos pés do sprite no mundo.
 export const PROP_POSITIONS = {
-  caixote: { x: 70, y: 40 },
-  barril: { x: 92, y: 34 },
-  fogueira: { x: -16, y: 53 },
-  bandeira: { x: -122, y: 26 },
-  cabana: { x: 34, y: 29 },
-  farol: { x: 124, y: 21 },
-  bancada: { x: -60, y: 45 },
-  quadro: { x: -22, y: 32 },
+  crate: { x: 70, y: 40 },
+  barrel: { x: 92, y: 34 },
+  campfire: { x: -16, y: 53 },
+  flag: { x: -122, y: 26 },
+  hut: { x: 34, y: 29 },
+  lighthouse: { x: 124, y: 21 },
+  workbench: { x: -60, y: 45 },
+  commitSign: { x: -22, y: 32 },
 };

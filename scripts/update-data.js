@@ -1,4 +1,4 @@
-// Consolida a atividade pública do GitHub em data/arquipelago.json.
+// Consolida a atividade pública do GitHub em data/archipelago.json.
 // Uso: GITHUB_TOKEN=... GITHUB_REPOSITORY=dono/repo node scripts/update-data.js
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -19,13 +19,13 @@ import {
 } from './lib.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUTPUT = join(ROOT, 'data', 'arquipelago.json');
+const OUTPUT = join(ROOT, 'data', 'archipelago.json');
 
 class RateLimitError extends Error {}
 
 class HttpError extends Error {
   constructor(status, path) {
-    super(`GitHub respondeu ${status} em ${path}`);
+    super(`GitHub answered ${status} for ${path}`);
     this.status = status;
   }
 }
@@ -41,7 +41,7 @@ function createClient(token) {
       },
     });
     if (isRateLimited(response.status, response.headers)) {
-      throw new RateLimitError(`Limite da API atingido em ${path}`);
+      throw new RateLimitError(`API rate limit reached at ${path}`);
     }
     if (!response.ok) throw new HttpError(response.status, path);
     return response.json();
@@ -61,7 +61,7 @@ async function fetchActivity(api, login) {
   const query = encodeURIComponent(recentCommitsQuery(login));
   const result = await api(`/search/commits?q=${query}&per_page=1`);
   const commits3d = result.total_count;
-  return { commits3d, energia: energyLevel(commits3d) };
+  return { commits3d, energy: energyLevel(commits3d) };
 }
 
 function listChildren(api, fullName) {
@@ -75,7 +75,7 @@ async function listForks(api, fullName) {
       return await listChildren(api, parent);
     } catch (error) {
       if (parent === fullName || !(error instanceof HttpError)) throw error;
-      console.warn(`Ignorando forks de ${parent}: ${error.message}`);
+      console.warn(`Skipping forks of ${parent}: ${error.message}`);
       return [];
     }
   };
@@ -96,22 +96,22 @@ async function refreshForks(api, forks, previousByLogin) {
       refreshed.set(fork.login, await fetchActivity(api, fork.login));
     } catch (error) {
       if (error instanceof RateLimitError) {
-        console.warn('Limite da API atingido. Os demais forks ficam para a próxima execução.');
+        console.warn('API rate limit reached. Remaining forks wait for the next run.');
         break;
       }
       if (!(error instanceof HttpError)) throw error;
-      console.warn(`Ignorando atividade de ${fork.login}: ${error.message}`);
+      console.warn(`Skipping activity of ${fork.login}: ${error.message}`);
     }
   }
 
-  console.log(`Forks: ${forks.length} no total, ${refreshed.size} atualizados nesta execução.`);
+  console.log(`Forks: ${forks.length} in total, ${refreshed.size} refreshed in this run.`);
   return refreshed;
 }
 
 async function main() {
   const token = process.env.GITHUB_TOKEN;
   const fullName = process.env.GITHUB_REPOSITORY;
-  if (!token || !fullName) throw new Error('Defina GITHUB_TOKEN e GITHUB_REPOSITORY.');
+  if (!token || !fullName) throw new Error('Set GITHUB_TOKEN and GITHUB_REPOSITORY.');
 
   const api = createClient(token);
   const previous = await readJson(OUTPUT);
@@ -127,21 +127,21 @@ async function main() {
     const known = previousByLogin.get(fork.login);
     const activity = refreshed.get(fork.login) ?? {
       commits3d: known?.commits3d ?? 0,
-      energia: known?.energia ?? 'dormindo',
+      energy: known?.energy ?? 'sleeping',
     };
     return { ...fork, ...activity };
   });
 
   const next = {
-    versao: 1,
-    geradoEm: new Date().toISOString(),
-    mae: { owner, repo: repo.name, url: repo.html_url },
-    ilhaPrincipal: {
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    mother: { owner, repo: repo.name, url: repo.html_url },
+    mainIsland: {
       login: owner,
       avatar: repo.owner.avatar_url ?? '',
       url: repo.html_url,
-      criadoEm: repo.created_at,
-      estrelas: repo.stargazers_count,
+      createdAt: repo.created_at,
+      stars: repo.stargazers_count,
       ...ownerActivity,
     },
     totalForks: forks.length,
@@ -149,12 +149,12 @@ async function main() {
   };
 
   if (sameContent(previous, next)) {
-    console.log('Nenhuma mudança real. Arquivo mantido.');
+    console.log('No real changes. File kept.');
     return;
   }
   await writeFile(OUTPUT, `${JSON.stringify(next, null, 2)}\n`);
   console.log(
-    `Arquivo atualizado: ${next.ilhaPrincipal.estrelas} estrelas, ${forks.length} forks.`,
+    `File updated: ${next.mainIsland.stars} stars, ${forks.length} forks.`,
   );
 }
 

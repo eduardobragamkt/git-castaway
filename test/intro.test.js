@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { TEXTS } from '../js/i18n.js';
+import { TEXTS } from '../js/core/i18n.js';
 import {
   INTRO,
   canSkipIntro,
@@ -11,8 +11,8 @@ import {
   shouldPlayIntro,
   takeProgress,
   typedText,
-} from '../js/intro.js';
-import { introBottle } from '../js/scene/activities.js';
+} from '../js/core/intro.js';
+import { introBottle } from '../js/scene/activities/index.js';
 import { Actor } from '../js/scene/actor.js';
 
 const base = { seen: false, wantedIsland: null, reducedMotion: false };
@@ -88,7 +88,7 @@ test('o movimento da câmera começa e termina suave', () => {
 
 test('a tomada da garrafa cabe no tempo e termina com ele na ilha', () => {
   const events = [];
-  const actor = new Actor({ energy: 'dormindo', onEvent: (event) => events.push(event) });
+  const actor = new Actor({ energy: 'sleeping', onEvent: (event) => events.push(event) });
   actor.x = 92;
   actor.y = 48;
   actor.interrupt(introBottle());
