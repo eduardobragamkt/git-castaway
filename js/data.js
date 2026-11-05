@@ -24,11 +24,16 @@ export function devOptions(location) {
   if (!isLocalHost(location.hostname)) return {};
   const params = new URLSearchParams(location.search);
   const hour = Number(params.get('hora'));
+  const date = new Date(params.get('data'));
+  const tide = Number(params.get('mare'));
   return {
     activity: params.get('cena'),
     variant: params.get('variante'),
     hour: params.has('hora') && Number.isFinite(hour) ? hour : null,
     view: params.get('visao'),
+    date: params.has('data') && !Number.isNaN(date.getTime()) ? date : null,
+    weather: params.get('clima'),
+    tide: params.has('mare') && Number.isFinite(tide) ? tide : null,
   };
 }
 
@@ -72,6 +77,7 @@ function normalizeIsland(raw) {
     avatar: httpsOrNull(raw.avatar),
     url: httpsOrNull(raw.url),
     pagesUrl: httpsOrNull(raw.pagesUrl),
+    criadoEm: typeof raw.criadoEm === 'string' ? raw.criadoEm : null,
     estrelas: Math.max(0, Number(raw.estrelas) || 0),
     commits3d: Math.max(0, Number(raw.commits3d) || 0),
     energia: ENERGY_LEVELS.has(raw.energia) ? raw.energia : 'dormindo',

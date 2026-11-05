@@ -141,6 +141,7 @@ async function main() {
       avatar: repo.owner.avatar_url ?? '',
       url: repo.html_url,
       pagesUrl,
+      criadoEm: repo.created_at,
       estrelas: repo.stargazers_count,
       ...ownerActivity,
     },

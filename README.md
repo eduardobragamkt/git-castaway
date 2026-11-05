@@ -24,6 +24,14 @@ Personagem, arte e código são originais. O projeto é uma homenagem ao gênero
 
 Sem mexer no mouse por alguns segundos, os painéis somem e sobra só a ilha.
 
+## A vida na ilha
+
+O náufrago sorteia dezenas de cenas conforme commits, hora, estrelas, clima e maré: pesca, coco, mergulho, fogo, leitura, pedidos de ajuda que nunca funcionam, visitantes, invasão de bugs e `merge conflict` entre caranguejos.
+
+A ilha também tem chuva e calor, maré que sobe e desce, datas comemorativas e marcos reais do repositório, como a primeira estrela e o aniversário. Tudo vem de dados públicos e do relógio do visitante, então qualquer fork funciona sem configuração.
+
+O náufrago nunca sai da ilha.
+
 ## Sua própria ilha
 
 1. Dê um fork neste repositório.
@@ -60,8 +68,11 @@ Parâmetros de teste em `http://localhost:4173`:
 | `?hora=21` | Fixa o horário do céu e da luz |
 | `?cena=coconut` | Repete uma atividade do náufrago (veja `js/scene/activities.js`) |
 | `?cena=coconut&variante=stone` | Repete uma versão específica da atividade |
+| `?data=2026-12-25T21:00` | Simula uma data, útil para as datas comemorativas |
+| `?clima=chuva` ou `?clima=calor` | Força o clima |
+| `?mare=0` | Força a maré: de `0` (baixa) a `1` (alta) |
 
-Os parâmetros `dados`, `visao`, `hora`, `cena` e `variante` só funcionam em ambiente local.
+Os parâmetros `dados`, `visao`, `hora`, `cena`, `variante`, `data`, `clima` e `mare` só funcionam em ambiente local.
 
 ```text
 data/arquipelago.json        estado do jogo, gerado pelo workflow

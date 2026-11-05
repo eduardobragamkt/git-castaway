@@ -2,13 +2,16 @@
 // ampliado uma única vez, o que garante pixels nítidos em qualquer zoom.
 
 import { hashString, makeCanvas } from '../art.js';
+import { daysOnIsland } from '../calendar.js';
 import { isNight, paletteAt } from '../time.js';
 import { hasUpgrade } from '../upgrades.js';
-import { collectBottle, celebrateCrate, SCENE_SPOTS } from './activities.js';
+import { celebrateMilestone, collectBottle, celebrateCrate, SCENE_SPOTS } from './activities.js';
 import { Actor } from './actor.js';
+import { Ambience } from './ambience.js';
 import { Backdrop } from './backdrop.js';
 import { drawRig } from './rig.js';
 import { PROP_POSITIONS, buildIsland, buildPalm, buildProps, islandFront } from './scene-art.js';
+import { WorldEvents, paintCrab } from './world-events.js';
 
 const WATERLINE_ROWS = 22;
 const CASTLE_SLOTS = [
@@ -18,10 +21,26 @@ const CASTLE_SLOTS = [
 ];
 
 export class Scene {
-  constructor(spec, { hourFn, distantIslets = 0, fixedActivity = null, fixedVariant = null }) {
+  constructor(
+    spec,
+    {
+      hourFn,
+      dateFn = () => new Date(),
+      distantIslets = 0,
+      fixedActivity = null,
+      fixedVariant = null,
+      weatherOverride = null,
+      tideOverride = null,
+      holidayOverride = null,
+    },
+  ) {
     this.spec = spec;
     this.hourFn = hourFn;
+    this.dateFn = dateFn;
     this.seed = hashString(spec.login || 'ilha');
+    this.world = new WorldEvents(this);
+    this.ambience = new Ambience(this, { dateFn, weatherOverride, tideOverride, holidayOverride });
+    this.palette = null;
     this.backdrop = new Backdrop(this.seed, distantIslets);
     this.islandArt = buildIsland(this.seed, spec.principal);
     this.props = buildProps();
@@ -44,6 +63,7 @@ export class Scene {
       commits: spec.commits3d,
       stars: spec.estrelas,
       night: () => isNight(this.hourFn()),
+      conditions: () => this.ambience.conditions(),
       onEvent: (event) => this.handleEvent(event),
       fixedActivity,
       fixedVariant,
@@ -119,6 +139,34 @@ export class Scene {
     else if (event === 'waveWipe' && this.castles > 0) {
       this.wave = { x: CASTLE_SLOTS[this.castles - 1].x, time: 0 };
       this.castles -= 1;
+    } else if (typeof event === 'string') this.world.handle(event);
+  }
+
+  celebrate(onStart, onEnd) {
+    this.actor.interrupt(celebrateMilestone(onStart, onEnd));
+  }
+
+  // Marcas no poste: um risco por dia na ilha, agrupados de cinco em cinco.
+  drawTally(g) {
+    const days = daysOnIsland(this.spec.criadoEm, this.dateFn());
+    if (!days) return;
+    const x = -138 - this.view.left;
+    const y = 46 - this.view.top;
+    g.fillStyle = '#231a2b';
+    g.fillRect(x - 6, y - 24, 13, 24);
+    g.fillStyle = '#8c6340';
+    g.fillRect(x - 5, y - 23, 11, 23);
+    g.fillStyle = '#6f4a2a';
+    g.fillRect(x + 3, y - 23, 3, 23);
+    const shown = ((days - 1) % 30) + 1;
+    g.fillStyle = '#f4ecd8';
+    for (let mark = 0; mark < shown; mark += 1) {
+      const group = Math.floor(mark / 5);
+      const inGroup = mark % 5;
+      const left = x - 4 + (group % 2) * 5;
+      const top = y - 21 + Math.floor(group / 2) * 7;
+      if (inGroup < 4) g.fillRect(left + inGroup, top, 1, 5);
+      else for (let i = 0; i < 4; i += 1) g.fillRect(left + i, top + 3 - i, 1, 1);
     }
   }
 
@@ -176,6 +224,8 @@ export class Scene {
       return false;
     });
     this.updateCritters(dt);
+    this.world.update(dt);
+    this.ambience.update(dt);
     if (this.drop) {
       if (this.drop.height > 0) this.drop.height = Math.max(0, this.drop.height - 42 * dt);
       else {
@@ -239,13 +289,17 @@ export class Scene {
 
     const hour = this.hourFn();
     const palette = paletteAt(hour);
+    this.palette = palette;
     const bg = this.buffer.g;
     const fg = this.foreground.g;
 
     this.backdrop.draw(bg, this.view, clock, hour, palette, dt);
+    this.ambience.drawFireworks(bg, this.view);
+    this.world.drawBack(bg);
     this.drawReflection(bg, palette);
 
     fg.clearRect(0, 0, width, height);
+    this.ambience.drawTideBand(fg);
     fg.drawImage(this.islandArt.canvas, -this.islandArt.ox - left, -this.islandArt.oy - top);
     this.drawFootprints(fg);
     this.drawFoam(fg, palette);
@@ -253,6 +307,7 @@ export class Scene {
 
     this.applyLight(bg, palette, width, height);
     this.drawLights(bg, palette);
+    this.ambience.drawWeather(bg, this.view);
 
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(this.buffer.canvas, 0, 0, width * S, height * S);
@@ -279,7 +334,7 @@ export class Scene {
     const { left, top } = this.view;
     g.fillStyle = '#0a1a33';
     for (let row = 0; row < WATERLINE_ROWS; row += 1) {
-      const y = 58 + row;
+      const y = 58 + this.ambience.tideOffset + row;
       const shrink = row * row * 0.32;
       const wobble = Math.round(Math.sin(this.time * 2 + row * 0.9) * 2);
       const half = 150 - shrink;
@@ -304,7 +359,7 @@ export class Scene {
     const { left, top } = this.view;
     const wash = Math.sin(this.time * 0.9) * 1.6;
     for (let x = -158; x <= 158; x += 3) {
-      const y = islandFront(Math.max(-152, Math.min(152, x)));
+      const y = islandFront(Math.max(-152, Math.min(152, x))) + this.ambience.tideOffset;
       const ripple = Math.round(Math.sin(this.time * 1.8 + x * 0.14) * 1.2 + wash);
       if ((x + Math.floor(this.time * 3)) % 15 === 0) continue;
       g.fillStyle = palette.night > 0.6 ? palette.cap : '#f2fbf6';
@@ -353,13 +408,18 @@ export class Scene {
         },
       });
     }
-    layers.push({ depth: PROP_POSITIONS.bancada.y, paint: () => this.drawProp(g, 'bancada') });
+    layers.push({
+      depth: PROP_POSITIONS.bancada.y,
+      paint: () => (this.world.benchDown > 0 ? this.drawFallenBench(g) : this.drawProp(g, 'bancada')),
+    });
+    layers.push({ depth: 46, paint: () => this.drawTally(g) });
     if (spec.commits3d > 0 || actor.commits > 0) {
       layers.push({
         depth: PROP_POSITIONS.quadro.y,
         paint: () => {
           this.drawProp(g, 'quadro');
           this.drawCommitTiles(g);
+          if (this.world.boardPainted) this.drawBoardPaint(g);
         },
       });
     }
@@ -379,6 +439,31 @@ export class Scene {
     if (this.gull) this.drawGull(g);
     if (this.bottleVisible) this.drawBottle(g);
     if (this.drop) this.drawDrop(g);
+    this.world.drawFront(g);
+    this.ambience.drawDecorations(g);
+  }
+
+  drawFallenBench(g) {
+    const { x, y } = PROP_POSITIONS.bancada;
+    const left = Math.round(x - 16 - this.view.left);
+    const bottom = Math.round(y - this.view.top);
+    g.fillStyle = '#3d2a1d';
+    g.fillRect(left - 2, bottom - 5, 36, 5);
+    g.fillStyle = '#b98347';
+    g.fillRect(left - 1, bottom - 4, 34, 3);
+    g.fillStyle = '#54331f';
+    g.fillRect(left + 2, bottom - 8, 10, 3);
+    g.fillRect(left + 20, bottom - 7, 9, 2);
+  }
+
+  drawBoardPaint(g) {
+    const { x, y } = PROP_POSITIONS.quadro;
+    const sprite = this.props.quadro;
+    const left = Math.round(x - sprite.width / 2 - this.view.left) + 1;
+    const top = Math.round(y - sprite.height - this.view.top) + 1;
+    g.fillStyle = '#ea7a3a';
+    g.fillRect(left, top, 36, 2);
+    g.fillRect(left, top + 17, 36, 2);
   }
 
   drawActor(g, palette) {
@@ -386,7 +471,7 @@ export class Scene {
     const x = Math.round(actor.x) - view.left;
     const groundY = Math.round(actor.y) - view.top;
     const y = groundY - Math.round(actor.lift);
-    const inSea = actor.x > 154;
+    const inSea = Math.abs(actor.x) > 154;
     if (!inSea) {
       g.fillStyle = 'rgba(70, 45, 20, 0.3)';
       g.fillRect(x - 10, groundY - 1, 20, 2);
@@ -442,23 +527,7 @@ export class Scene {
 
   drawCrab(g) {
     const { crab, time } = this;
-    const x = Math.round(crab.x) - this.view.left;
-    const y = Math.round(crab.y) - this.view.top;
-    const step = Math.floor(time * 12) % 2;
-    const rect = (px, py, w, h, color) => {
-      g.fillStyle = color;
-      g.fillRect(x + px, y + py, w, h);
-    };
-    rect(-6, -5, 12, 6, '#231a2b');
-    rect(-5, -4, 10, 4, '#d84f3f');
-    rect(-4, -4, 8, 1, '#ef7a62');
-    rect(-3, -7, 1, 2, '#231a2b');
-    rect(2, -7, 1, 2, '#231a2b');
-    rect(-4, -8, 2, 2, '#f4ecd8');
-    rect(2, -8, 2, 2, '#f4ecd8');
-    rect(-9, -5 - step, 3, 3, '#d84f3f');
-    rect(6, -5 - (1 - step), 3, 3, '#d84f3f');
-    for (const px of [-5, -2, 1, 4]) rect(px, 1, 1, 1 + ((px + step) & 1), '#a93a2f');
+    paintCrab(g, Math.round(crab.x) - this.view.left, Math.round(crab.y) - this.view.top, time);
   }
 
   drawGull(g) {
@@ -581,6 +650,51 @@ export class Scene {
       rect(hand.x - 5, hand.y - 4, 10, 5, '#231a2b');
       rect(hand.x - 4, hand.y - 3, 8, 3, '#b8682e');
     }
+    if (actor.item === 'book') {
+      const x = (hand.x + joints.handBack.x) / 2;
+      const y = (hand.y + joints.handBack.y) / 2;
+      rect(x - 7, y - 7, 14, 9, '#231a2b');
+      rect(x - 6, y - 6, 6, 7, '#2e5f8c');
+      rect(x, y - 6, 6, 7, '#3a74a8');
+      rect(x - 1, y - 6, 1, 7, '#f4ecd8');
+    }
+    if (actor.item === 'bookFace') {
+      rect(joints.head.x - 7, joints.head.y - 5, 14, 5, '#231a2b');
+      rect(joints.head.x - 6, joints.head.y - 4, 12, 3, '#2e5f8c');
+    }
+    if (actor.item === 'sticks') {
+      line(hand.x, hand.y, hand.x + f * 7, hand.y + 5, '#6f452a');
+      line(joints.handBack.x, joints.handBack.y, joints.handBack.x + f * 7, joints.handBack.y - 3, '#54331f');
+    }
+    if (actor.item === 'saw') {
+      rect(hand.x + (f > 0 ? 0 : -14), hand.y - 1, 14, 3, '#231a2b');
+      rect(hand.x + (f > 0 ? 1 : -13), hand.y, 12, 1, '#a09eaa');
+      rect(hand.x + (f > 0 ? -3 : 0), hand.y - 2, 3, 5, '#6f452a');
+    }
+    if (actor.item === 'plank') {
+      rect(hand.x - 13, hand.y - 3, 26, 4, '#231a2b');
+      rect(hand.x - 12, hand.y - 2, 24, 2, '#b98347');
+    }
+    if (actor.item === 'ruler') {
+      rect(hand.x + (f > 0 ? 0 : -14), hand.y - 1, 14, 2, '#f2c94c');
+      for (let mark = 0; mark < 14; mark += 3) rect(hand.x + (f > 0 ? mark : -mark), hand.y - 1, 1, 1, '#231a2b');
+    }
+    if (actor.item === 'brush') {
+      line(hand.x, hand.y, hand.x + f * 6, hand.y - 6, '#6f452a');
+      rect(hand.x + f * 6 - 1, hand.y - 9, 3, 3, '#ea7a3a');
+    }
+    if (actor.item === 'spyglass' || actor.item === 'spyglassBackwards') {
+      const eyeX = joints.head.x + f * 6;
+      const eyeY = joints.head.y + 1;
+      line(eyeX, eyeY, hand.x, hand.y, '#54331f');
+      const wide = actor.item === 'spyglass';
+      rect(eyeX + (f > 0 ? 0 : -14), eyeY - (wide ? 1 : 2), 14, wide ? 3 : 5, '#231a2b');
+      rect(eyeX + (f > 0 ? 1 : -13), eyeY - (wide ? 0 : 1), 12, wide ? 1 : 3, '#c9934d');
+    }
+    if (actor.item === 'shell') {
+      rect(hand.x - 3, hand.y - 4, 7, 5, '#231a2b');
+      rect(hand.x - 2, hand.y - 3, 5, 3, '#ffd9c8');
+    }
     if (actor.item === 'coconut') {
       this.drawCoconut(g, hand.x + view.left, hand.y - 2 + view.top);
     }
@@ -598,6 +712,24 @@ export class Scene {
   drawEffect(g, joints) {
     const { actor, time } = this;
     const head = joints.head;
+    this.ambience.drawHat(g, head);
+    if (actor.effect === 'ink') {
+      g.fillStyle = '#231a2b';
+      g.fillRect(Math.round(head.x) - 5, Math.round(head.y) - 3, 10, 4);
+      g.fillRect(Math.round(head.x) - 3, Math.round(head.y) + 1, 6, 3);
+    }
+    if (actor.effect === 'dust') {
+      g.fillStyle = '#e7d9b6';
+      for (let i = 0; i < 4; i += 1) {
+        const drift = (time * 1.7 + i * 0.25) % 1;
+        g.fillRect(
+          Math.round(joints.handFront.x + actor.facing * (4 + drift * 14)),
+          Math.round(joints.handFront.y + drift * 12 - 4 + i),
+          2,
+          1,
+        );
+      }
+    }
     if (actor.effect === 'zzz') {
       for (let i = 0; i < 3; i += 1) {
         const rise = (time * 0.7 + i * 0.33) % 1;

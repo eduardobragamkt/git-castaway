@@ -1,5 +1,6 @@
 import { MOTHER_REPO_URL } from './config.js';
 import { activeBottles, canReadBottle } from './bottles.js';
+import { daysOnIsland, pendingMilestones } from './calendar.js';
 import { buildIslandSpecs, devOptions, loadData, profileUrl, resolveMode } from './data.js';
 import { Island } from './island.js';
 import { islandPosition, worldBounds } from './layout.js';
@@ -25,6 +26,16 @@ const TEXT = {
     visit: 'Visitar página da ilha',
     enter: 'Entrar na ilha',
     commits: (count) => `${count} ${count === 1 ? 'commit público' : 'commits públicos'} em 3 dias`,
+    days: (count) => `Dia ${count} na ilha`,
+    milestones: {
+      primeiraEstrela: 'Primeira estrela! A ilha já tem fãs.',
+      dezEstrelas: 'Dez estrelas! A ilha está ficando famosa.',
+      cemEstrelas: 'Cem estrelas! Que arquipélago é este?',
+      primeiroFork: 'Primeiro fork! Já tem ilha vizinha.',
+      primeiraGarrafa: 'Primeira garrafa! Alguém lembrou de mim.',
+      dezCommits: 'Dez commits em 3 dias! Que produtividade.',
+      aniversario: 'Feliz aniversário, ilha!',
+    },
     next: (name, stars) => `Próxima melhoria: ${name} (★ ${stars})`,
     complete: 'Todas as melhorias conquistadas',
     energy: { dormindo: 'Dormindo', pescando: 'Pescando de boa', trabalhando: 'A todo vapor' },
@@ -47,6 +58,16 @@ const TEXT = {
     visit: 'Visit island page',
     enter: 'Enter island',
     commits: (count) => `${count} public ${count === 1 ? 'commit' : 'commits'} in 3 days`,
+    days: (count) => `Day ${count} on the island`,
+    milestones: {
+      primeiraEstrela: 'First star! The island has fans.',
+      dezEstrelas: 'Ten stars! The island is getting famous.',
+      cemEstrelas: 'A hundred stars! What an archipelago.',
+      primeiroFork: 'First fork! There is a neighbor island.',
+      primeiraGarrafa: 'First bottle! Someone remembered me.',
+      dezCommits: 'Ten commits in 3 days! So productive.',
+      aniversario: 'Happy birthday, island!',
+    },
     next: (name, stars) => `Next upgrade: ${name} (★ ${stars})`,
     complete: 'All upgrades unlocked',
     energy: { dormindo: 'Sleeping', pescando: 'Fishing', trabalhando: 'Full steam ahead' },
@@ -60,6 +81,7 @@ const TEXT = {
 
 const BOTTLE_CHECK_MS = 5000;
 const BOTTLE_READ_KEY = 'git-castaway:ultima-leitura';
+const MILESTONES_KEY = 'git-castaway:marcos';
 const DRAG_THRESHOLD = 5;
 const IDLE_AFTER_MS = 5000;
 const ZOOM_MENU_SPACE = 80;
@@ -76,7 +98,8 @@ const zoomOutButton = document.getElementById('zoom-menos');
 const zoomFitButton = document.getElementById('zoom-ajustar');
 
 const dev = devOptions(window.location);
-const hourNow = () => dev.hour ?? currentHour();
+const hourNow = () => dev.hour ?? currentHour(dev.date ?? new Date());
+const dateNow = () => dev.date ?? new Date();
 
 const cameras = { map: { x: 0, y: 0 }, scene: { x: 0, y: 0 } };
 const zoomOverride = { map: null, scene: null };
@@ -400,7 +423,10 @@ function showCard(spec, anchorFn, onEnter = null) {
     if (visit) actions.append(visit);
   }
 
-  card.append(close, header, meter, activity, stars, goal, progress, actions);
+  const dayCount = daysOnIsland(spec.criadoEm, dateNow());
+  const days = dayCount ? element('p', 'cartao-linha', TEXT.days(dayCount)) : null;
+
+  card.append(close, header, meter, activity, ...(days ? [days] : []), stars, goal, progress, actions);
   card.hidden = false;
   cardAnchor = anchorFn;
   document.body.classList.remove('ocioso');
@@ -438,6 +464,9 @@ function buildScene(spec) {
     distantIslets: appData.totalForks,
     fixedActivity: dev.activity && ACTIVITIES[dev.activity] ? dev.activity : null,
     fixedVariant: dev.variant ?? null,
+    dateFn: dateNow,
+    weatherOverride: dev.weather ?? null,
+    tideOverride: dev.tide ?? null,
   });
 }
 
@@ -633,6 +662,33 @@ function deliverBottle() {
   );
 }
 
+// Marcos reais do repositório: cada navegador comemora cada um uma vez.
+function deliverMilestone() {
+  if (activeView !== 'scene' || dev.activity || readingAnchor || bottleHeld || transition) return false;
+  let seen = [];
+  try {
+    seen = JSON.parse(localStorage.getItem(MILESTONES_KEY)) ?? [];
+  } catch {
+    return false;
+  }
+  const context = { forks: appData.totalForks, bottles: appData.issuesAbertas };
+  const [milestone] = pendingMilestones(scene.spec, context, seen, dateNow());
+  if (!milestone) return false;
+  try {
+    localStorage.setItem(MILESTONES_KEY, JSON.stringify([...seen, milestone]));
+  } catch {
+    return false;
+  }
+  const key = milestone.startsWith('aniversario') ? 'aniversario' : milestone;
+  const current = scene;
+  current.celebrate(() => {
+    balloon.textContent = TEXT.milestones[key];
+    balloon.hidden = false;
+    readingAnchor = () => current.anchor();
+  }, stopReading);
+  return true;
+}
+
 // A garrafa continua na areia entre as leituras e some sozinha ao fim da validade.
 function syncBottleOnBeach() {
   const show = !dev.activity && !bottleHeld && activeBottles(appData.garrafas).length > 0;
@@ -682,8 +738,13 @@ function drawMap(now, dt) {
 }
 
 function frame(now) {
+  // Agendar antes de desenhar mantém a animação viva mesmo se um quadro falhar.
+  requestAnimationFrame(frame);
   const dt = Math.min((now - previousFrame) / 1000, 0.1);
   previousFrame = now;
+  // Em aba ou painel oculto a tela pode ter tamanho zero.
+  if (window.innerWidth === 0 || window.innerHeight === 0) return;
+  if (canvas.width === 0 || canvas.height === 0) resize();
   ctx.imageSmoothingEnabled = false;
   syncBottleOnBeach();
 
@@ -701,7 +762,6 @@ function frame(now) {
     positionFloating(balloon, readingAnchor());
   }
   if (cardAnchor && !card.hidden) positionFloating(card, cardAnchor(), true);
-  requestAnimationFrame(frame);
 }
 
 async function start() {
@@ -740,7 +800,9 @@ async function start() {
     if (startInScene) scene.dropCrate();
     else islands[0].dropCrate();
   }
-  window.setInterval(deliverBottle, BOTTLE_CHECK_MS);
+  window.setInterval(() => {
+    if (!deliverMilestone()) deliverBottle();
+  }, BOTTLE_CHECK_MS);
   if (!startInScene) window.setTimeout(deliverBottle, 2500);
   requestAnimationFrame(frame);
 }

@@ -2,57 +2,14 @@
 // em geradores, e o ator executa um passo por vez. Os roteiros são originais do Git Castaway.
 
 import { hasUpgrade } from '../upgrades.js';
+import * as more from './more-activities.js';
+import { SCENE_SPOTS, biteAlert, castLine, cycle, dazed, emit, hold, set, walk } from './script.js';
 
-export const SCENE_SPOTS = {
-  center: { x: 8, y: 42 },
-  shore: { x: 124, y: 46 },
-  bench: { x: -38, y: 45 },
-  board: { x: -4, y: 36 },
-  castle: { x: 38, y: 50 },
-  palm: { x: -108, y: 40 },
-  trunk: { x: -90, y: 25 },
-  fire: { x: -40, y: 51 },
-  rest: { x: 24, y: 47 },
-  horizon: { x: 112, y: 40 },
-  bottle: { x: 116, y: 52 },
-  crate: { x: 54, y: 42 },
-  sun: { x: 50, y: 47 },
-  sea: { x: 166, y: 56 },
-  beachLeft: { x: -124, y: 49 },
-  beachRight: { x: 122, y: 50 },
-  stroll: { x: -8, y: 47 },
-};
+export { SCENE_SPOTS } from './script.js';
+export { celebrateMilestone } from './more-activities.js';
 
 const ACTIVITY_SHARE_CAP = 0.25;
 const SHARE_WARMUP_SECONDS = 60;
-
-const walk = (spot, extra = {}) => ({ walk: spot, ...extra });
-const hold = (pose, seconds = 0.5, extra = {}) => ({ pose, seconds, ...extra });
-const cycle = (poses, hz, seconds, extra = {}) => ({ cycle: poses, hz, seconds, ...extra });
-const set = (props) => ({ set: props });
-const emit = (event) => ({ emit: event });
-
-// Trechos reaproveitados
-
-function* dazed(a) {
-  yield set({ item: null, mood: 'dizzy', effect: 'stars', lift: 0 });
-  yield cycle(['dazedA', 'dazedB'], 1.4, a.between(1.8, 2.8));
-  yield set({ effect: null, mood: 'sad' });
-  yield hold('sit', 0.6);
-  yield set({ mood: 'calm' });
-}
-
-function* castLine(a, minSeconds, maxSeconds) {
-  yield walk(SCENE_SPOTS.shore);
-  yield set({ facing: 1, item: 'rod', mood: 'calm' });
-  yield hold('sitFish', 0.7);
-  yield cycle(['sitFish', 'sitFishTug'], 0.55, a.between(minSeconds, maxSeconds));
-}
-
-function* biteAlert() {
-  yield set({ mood: 'surprised' });
-  yield cycle(['sitFish', 'sitFishTug'], 4, 0.8);
-}
 
 function* shakeTrunk(seconds) {
   yield walk(SCENE_SPOTS.palm);
@@ -391,41 +348,8 @@ function* warmHands(a) {
 }
 
 // Pausas curtas entre as ações: é o que tira o jeito de robô.
-
-function* beatScratch() {
-  yield set({ mood: 'calm' });
-  yield hold('scratchHead', 1.6);
-  yield hold('stand', 0.5);
-}
-
-function* beatLookAround(a) {
-  yield set({ mood: 'calm', facing: -a.facing });
-  yield hold('stand', 1);
-  yield set({ facing: -a.facing });
-  yield hold('stand', 1);
-}
-
-function* beatYawn() {
-  yield set({ mood: 'sleepy' });
-  yield hold('yawn', 1.8);
-  yield set({ mood: 'calm' });
-  yield hold('stand', 0.5);
-}
-
-function* beatKick() {
-  yield set({ mood: 'calm' });
-  yield cycle(['kickA', 'kickB'], 1.5, 2);
-  yield hold('stand', 0.3);
-}
-
-function* beatSigh() {
-  yield set({ mood: 'sad' });
-  yield hold('bend', 1.6);
-  yield hold('stand', 1);
-}
-
 export function pauseBeat(actor) {
-  const beats = actor.energy === 'dormindo' ? [beatYawn, beatSigh] : [beatScratch, beatLookAround, beatYawn, beatKick];
+  const beats = actor.energy === 'dormindo' ? more.SLEEPY_BEATS : more.PAUSE_BEATS;
   return beats[Math.floor(actor.random() * beats.length)](actor);
 }
 
@@ -449,7 +373,16 @@ const hasFire = (stars) => hasUpgrade(stars, 'fogueira');
 // weight devolve 0 quando a atividade não cabe no momento.
 export const ACTIVITIES = {
   fish: {
-    variants: { small: fishSmall, boot: fishBoot, tumble: fishTumble, bait: fishBait, nap: fishNap, gull: fishGull },
+    variants: {
+      small: fishSmall,
+      boot: fishBoot,
+      tumble: fishTumble,
+      bait: fishBait,
+      nap: fishNap,
+      gull: fishGull,
+      spit: more.fishSpit,
+      fin: more.fishFin,
+    },
     weight: ({ energy, night }) => {
       if (energy === 'dormindo') return 0;
       if (night) return 3;
@@ -471,8 +404,86 @@ export const ACTIVITIES = {
     },
   },
   hammer: {
-    variants: { steady: hammerSteady, thumb: hammerThumb },
+    variants: {
+      steady: hammerSteady,
+      thumb: hammerThumb,
+      saw: more.benchSaw,
+      plank: more.benchPlank,
+      collapse: more.benchCollapse,
+      measure: more.benchMeasure,
+      paint: more.benchPaint,
+    },
     weight: ({ energy }) => ({ trabalhando: 3, pescando: 1 })[energy] ?? 0,
+  },
+  read: {
+    variants: {
+      calm: more.readCalm,
+      nap: more.readNap,
+      gullPerch: more.readGullPerch,
+      gullBath: more.readGullBath,
+      gullStays: more.readGullStays,
+    },
+    weight: ({ energy, rain }) => (energy === 'dormindo' || rain ? 0 : 3),
+  },
+  dive: {
+    variants: { clean: more.diveClean, bellyFlop: more.diveBellyFlop },
+    weight: ({ energy, night, rain }) => (energy === 'dormindo' || night || rain ? 0 : 3),
+  },
+  makeFire: {
+    variants: { fails: more.fireFails, burnsHand: more.fireBurnsHand, lights: more.fireLights },
+    weight: ({ energy, rain }) => (energy === 'dormindo' || rain ? 0 : 3),
+  },
+  askHelp: {
+    variants: { sand: more.helpSand, bottle: more.helpBottle, wave: more.helpWave },
+    weight: ({ energy, night }) => (energy === 'dormindo' || night ? 0 : 2),
+  },
+  spyglass: {
+    variants: { nothing: more.spyNothing, whale: more.spyWhale, wrongEnd: more.spyWrongEnd },
+    weight: ({ energy, night }) => (energy === 'dormindo' || night ? 0 : 2),
+  },
+  bugs: {
+    variants: only(more.bugsInvasion),
+    weight: ({ energy, commits }) => (energy === 'dormindo' ? 0 : commits >= 5 ? 3 : 2),
+  },
+  mergeConflict: {
+    variants: only(more.mergeConflict),
+    weight: ({ energy, night }) => (energy === 'dormindo' || night ? 0 : 2),
+  },
+  tidePool: {
+    variants: only(more.poolSquirt),
+    weight: ({ energy, night }) => (energy === 'dormindo' || night ? 0 : 1),
+  },
+  shelter: { variants: only(more.rainShelter), weight: ({ rain }) => (rain ? 6 : 0) },
+  rainDance: {
+    variants: only(more.rainDance),
+    weight: ({ energy, rain }) => (rain && energy !== 'dormindo' ? 4 : 0),
+  },
+  beatTheHeat: {
+    variants: { shade: more.heatShade, dip: more.heatDip },
+    weight: ({ hot }) => (hot ? 5 : 0),
+  },
+  collectShells: {
+    variants: only(more.collectShells),
+    weight: ({ energy, night, lowTide }) => (lowTide && !night && energy !== 'dormindo' ? 4 : 0),
+  },
+  visitor: {
+    variants: {
+      plane: more.visitorPlane,
+      balloon: more.visitorBalloon,
+      dolphins: more.visitorDolphins,
+      turtle: more.visitorTurtle,
+      whale: more.visitorWhale,
+      flock: more.visitorFlock,
+    },
+    weight: ({ energy, night }) => (energy === 'dormindo' || night ? 0 : 3),
+  },
+  walkabout: {
+    variants: { tiptoe: more.walkTiptoe, trip: more.walkTrip, whistle: more.walkWhistle },
+    weight: ({ energy }) => (energy === 'dormindo' ? 0 : 2),
+  },
+  gag: {
+    variants: { slip: more.gagSlip, sneeze: more.gagSneeze },
+    weight: ({ energy }) => (energy === 'dormindo' ? 0 : 2),
   },
   commitBoard: {
     variants: only(commitBoard),

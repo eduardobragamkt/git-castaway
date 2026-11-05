@@ -28,6 +28,7 @@ export class Actor {
     commits = 0,
     stars = 0,
     night = () => false,
+    conditions = () => ({}),
     onEvent = () => {},
     fixedActivity = null,
     fixedVariant = null,
@@ -37,6 +38,7 @@ export class Actor {
     this.commits = commits;
     this.stars = stars;
     this.isNight = night;
+    this.conditions = conditions;
     this.onEvent = onEvent;
     this.fixedActivity = fixedActivity;
     this.fixedVariant = fixedVariant;
@@ -70,7 +72,13 @@ export class Actor {
   }
 
   context() {
-    return { energy: this.energy, commits: this.commits, stars: this.stars, night: this.isNight() };
+    return {
+      energy: this.energy,
+      commits: this.commits,
+      stars: this.stars,
+      night: this.isNight(),
+      ...this.conditions(),
+    };
   }
 
   // Interrompe a atividade atual e volta à rotina quando o novo roteiro termina.
@@ -150,6 +158,7 @@ export class Actor {
     this.step = step;
     this.stepTime = 0;
     this.stepLiftStart = this.lift;
+    this.leapStart = { x: this.x, y: this.y };
     if (!step.walk) return;
     this.route = routeTo(this, step.walk);
     const distance = Math.hypot(step.walk.x - this.x, step.walk.y - this.y);
@@ -181,6 +190,23 @@ export class Actor {
     if (Math.abs(dx) > 0.5) this.facing = dx > 0 ? 1 : -1;
   }
 
+  // Salto em arco, usado no mergulho da palmeira até o mar.
+  updateLeap(dt) {
+    const { step } = this;
+    const t = Math.min(1, this.stepTime / step.seconds);
+    this.x = this.leapStart.x + (step.leap.to.x - this.leapStart.x) * t;
+    this.y = this.leapStart.y + (step.leap.to.y - this.leapStart.y) * t;
+    this.lift = this.stepLiftStart * (1 - t) + step.leap.height * 4 * t * (1 - t);
+    if (Math.abs(step.leap.to.x - this.leapStart.x) > 0.5) {
+      this.facing = step.leap.to.x > this.leapStart.x ? 1 : -1;
+    }
+    this.pose = blendPose(this.pose, POSES[step.pose], Math.min(1, dt * POSE_SPEED));
+    if (t >= 1) {
+      this.lift = 0;
+      this.step = null;
+    }
+  }
+
   update(dt) {
     this.advance();
     const { step } = this;
@@ -195,6 +221,10 @@ export class Actor {
     }
 
     this.stepTime += dt;
+    if (step.leap) {
+      this.updateLeap(dt);
+      return;
+    }
     const target = step.cycle
       ? POSES[step.cycle[Math.floor(this.stepTime * step.hz * step.cycle.length) % step.cycle.length]]
       : POSES[step.pose];
