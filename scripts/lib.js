@@ -54,7 +54,7 @@ export function resolveBottle(issue, catalog) {
   const selection = parseBottleSelection(issue.body);
   const message =
     catalog.mensagens.find((candidate) => optionText(candidate) === selection) ?? catalog.fallback;
-  return { numero: issue.number, id: message.id, pt: message.pt, en: message.en };
+  return { numero: issue.number, abertaEm: issue.created_at, id: message.id, pt: message.pt, en: message.en };
 }
 
 // O endpoint /issues também devolve pull requests.

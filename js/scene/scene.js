@@ -274,9 +274,6 @@ export class Scene {
         },
       });
     }
-    if (hasUpgrade(stars, 'jangada')) {
-      layers.push({ depth: PROP_POSITIONS.jangada.y, paint: () => this.drawMooredRaft(g) });
-    }
     layers.push({ depth: PROP_POSITIONS.bancada.y, paint: () => this.drawProp(g, 'bancada') });
     if (spec.commits3d > 0 || actor.commits > 0) {
       layers.push({
@@ -466,13 +463,6 @@ export class Scene {
         g.fillRect(left + column, base - height + 7, 1, height - 7);
       }
     }
-  }
-
-  drawMooredRaft(g) {
-    const { x, y } = PROP_POSITIONS.jangada;
-    const sprite = this.props.jangada;
-    const bob = Math.round(Math.sin(this.time * 1.5));
-    g.drawImage(sprite, x - sprite.width / 2 - this.view.left, y - sprite.height - this.view.top + bob);
   }
 
   drawCommitTiles(g) {

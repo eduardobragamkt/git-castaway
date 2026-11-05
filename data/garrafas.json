@@ -11,7 +11,7 @@
     { "id": "navio", "pt": "Um navio passou. Não deixou nenhuma estrela.", "en": "A ship went by. It left no star." },
     { "id": "bug-grande", "pt": "Pesquei um bug. Era deste tamanho!", "en": "I caught a bug. It was THIS big!" },
     { "id": "tubarao", "pt": "Hoje o tubarão revisou meu PR.", "en": "The shark reviewed my PR today." },
-    { "id": "jangada-beta", "pt": "Minha jangada ainda está em beta.", "en": "My raft is still in beta." },
+    { "id": "castelo-beta", "pt": "Meu castelo de areia ainda está em beta.", "en": "My sandcastle is still in beta." },
     { "id": "minha-ilha", "pt": "Funciona na minha ilha.", "en": "Works on my island." },
     { "id": "resgate", "pt": "Sem resgate ainda. Seguimos em produção.", "en": "No rescue yet. Still in production." },
     { "id": "bau", "pt": "Achei um baú. Dentro, só código legado.", "en": "Found a chest. Only legacy code inside." },

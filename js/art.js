@@ -227,20 +227,6 @@ function hut() {
   return canvas;
 }
 
-function raft() {
-  const [canvas, g] = makeCanvas(28, 19);
-  for (let x = 0; x < 28; x += 4) {
-    dot(g, x, 13, '#a87338', 3, 5);
-    dot(g, x, 13, '#c9934d', 3, 1);
-    dot(g, x + 3, 13, '#6f452a', 1, 5);
-  }
-  dot(g, 2, 15, '#d9d4c7', 24, 1);
-  dot(g, 13, 0, '#6f452a', 2, 14);
-  dot(g, 15, 1, '#f4ecd8', 9, 8);
-  dot(g, 15, 8, '#d5cbb3', 9, 1);
-  return canvas;
-}
-
 function lighthouse() {
   const [canvas, g] = makeCanvas(16, 42);
   dot(g, 7, 0, '#d84f3f', 2, 2);
@@ -265,7 +251,6 @@ export function decorationSprites() {
     fogueira: campfire(),
     bandeira: flag(),
     cabana: hut(),
-    jangada: raft(),
     farol: lighthouse(),
   };
   return decorationCache;

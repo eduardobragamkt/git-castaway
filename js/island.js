@@ -59,9 +59,6 @@ export class Island {
     return Math.abs(worldX - x) <= tolerance && worldY <= y + tolerance / 2 && worldY >= y - 18 - tolerance / 2;
   }
 
-  showBottle() {
-    this.bottleVisible = true;
-  }
 
   // A caixa cai de paraquedas até o lugar da melhoria mais recente.
   dropCrate() {

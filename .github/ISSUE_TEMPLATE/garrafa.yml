@@ -13,7 +13,7 @@ body:
     id: mensagem
     attributes:
       label: Mensagem da garrafa
-      description: A garrafa fica na praia enquanto a Issue estiver aberta. / The bottle stays on the beach while the issue is open.
+      description: A garrafa fica na praia por 30 minutos. / The bottle stays on the beach for 30 minutes.
       options:
         - "Alguém aí? Ótima vista, péssimo Wi-Fi. / Anyone out there? Great view, terrible Wi-Fi."
         - "Fiz push --force e acordei aqui. / I ran push --force and woke up here."
@@ -21,7 +21,7 @@ body:
         - "Um navio passou. Não deixou nenhuma estrela. / A ship went by. It left no star."
         - "Pesquei um bug. Era deste tamanho! / I caught a bug. It was THIS big!"
         - "Hoje o tubarão revisou meu PR. / The shark reviewed my PR today."
-        - "Minha jangada ainda está em beta. / My raft is still in beta."
+        - "Meu castelo de areia ainda está em beta. / My sandcastle is still in beta."
         - "Funciona na minha ilha. / Works on my island."
         - "Sem resgate ainda. Seguimos em produção. / No rescue yet. Still in production."
         - "Achei um baú. Dentro, só código legado. / Found a chest. Only legacy code inside."

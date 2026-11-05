@@ -6,7 +6,6 @@ export const STAR_UPGRADES = [
   { stars: 5, sprite: 'fogueira', x: -0.18, y: 0.5, pt: 'Fogueira', en: 'Campfire' },
   { stars: 10, sprite: 'bandeira', x: -0.5, y: -0.28, pt: 'Bandeira', en: 'Flag' },
   { stars: 25, sprite: 'cabana', x: 0.1, y: -0.42, pt: 'Cabana', en: 'Hut' },
-  { stars: 50, sprite: 'jangada', x: -1.08, y: 0.85, pt: 'Jangada', en: 'Raft' },
   { stars: 100, sprite: 'farol', x: -0.86, y: -0.35, pt: 'Farol', en: 'Lighthouse' },
 ];
 

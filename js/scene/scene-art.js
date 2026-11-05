@@ -253,26 +253,6 @@ function hut() {
   return c;
 }
 
-function raft() {
-  const [c, g] = makeCanvas(60, 42);
-  const rect = (x, y, w, h, color) => {
-    g.fillStyle = color;
-    g.fillRect(x, y, w, h);
-  };
-  for (let x = 0; x < 60; x += 6) {
-    rect(x, 32, 6, 10, '#3d2a1d');
-    rect(x + 1, 33, 4, 8, '#a87338');
-    rect(x + 1, 33, 4, 2, '#c9934d');
-  }
-  rect(3, 36, 54, 2, '#d9d4c7');
-  rect(28, 0, 3, 33, '#54331f');
-  rect(31, 3, 19, 19, '#3d2a1d');
-  rect(31, 4, 18, 17, '#f4ecd8');
-  rect(31, 19, 18, 2, '#d5cbb3');
-  rect(36, 9, 3, 7, '#ea7a3a');
-  return c;
-}
-
 function lighthouse() {
   const [c, g] = makeCanvas(30, 92);
   const rect = (x, y, w, h, color) => {
@@ -334,7 +314,6 @@ export function buildProps() {
     fogueira: firePit(),
     bandeira: flag(),
     cabana: hut(),
-    jangada: raft(),
     farol: lighthouse(),
     bancada: workbench(),
     quadro: commitSign(),
@@ -348,7 +327,6 @@ export const PROP_POSITIONS = {
   fogueira: { x: -16, y: 53 },
   bandeira: { x: -122, y: 26 },
   cabana: { x: 34, y: 29 },
-  jangada: { x: -186, y: 70 },
   farol: { x: 124, y: 21 },
   bancada: { x: -60, y: 45 },
   quadro: { x: -22, y: 32 },

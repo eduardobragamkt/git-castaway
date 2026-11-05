@@ -27,7 +27,7 @@ body:
     id: mensagem
     attributes:
       label: ${BOTTLE_FIELD_LABEL}
-      description: A garrafa fica na praia enquanto a Issue estiver aberta. / The bottle stays on the beach while the issue is open.
+      description: A garrafa fica na praia por 30 minutos. / The bottle stays on the beach for 30 minutes.
       options:
 ${options}
     validations:

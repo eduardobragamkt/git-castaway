@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { STAR_UPGRADES } from '../js/upgrades.js';
 import { renderIssueForm } from '../scripts/build-issue-form.js';
 import {
   energyLevel,
@@ -46,8 +47,9 @@ test('reconhece limite de requisições da busca', () => {
 
 test('opção válida do formulário vira a mensagem do catálogo', () => {
   const message = catalog.mensagens[0];
-  const bottle = resolveBottle({ number: 7, body: formBody(optionText(message)) }, catalog);
-  assert.deepEqual(bottle, { numero: 7, id: message.id, pt: message.pt, en: message.en });
+  const openedAt = '2026-11-04T10:00:00Z';
+  const bottle = resolveBottle({ number: 7, created_at: openedAt, body: formBody(optionText(message)) }, catalog);
+  assert.deepEqual(bottle, { numero: 7, abertaEm: openedAt, id: message.id, pt: message.pt, en: message.en });
 });
 
 test('texto de fora do catálogo nunca chega à garrafa', () => {
@@ -102,6 +104,16 @@ test('mudança só no carimbo de data não conta como mudança', () => {
 test('o formulário publicado está em sincronia com o catálogo', async () => {
   const form = await readFile(new URL('../.github/ISSUE_TEMPLATE/garrafa.yml', import.meta.url), 'utf8');
   assert.equal(form.replace(/\r\n/g, '\n'), renderIssueForm(catalog));
+});
+
+test('o náufrago nunca ganha uma embarcação para sair da ilha', () => {
+  const vessel = /jangada|canoa|barco|raft|canoe|\bboat\b/i;
+  for (const upgrade of STAR_UPGRADES) {
+    assert.doesNotMatch(`${upgrade.sprite} ${upgrade.pt} ${upgrade.en}`, vessel);
+  }
+  for (const message of catalog.mensagens) {
+    assert.doesNotMatch(`${message.id} ${message.pt} ${message.en}`, vessel);
+  }
 });
 
 test('o catálogo não tem ids nem opções repetidas', () => {

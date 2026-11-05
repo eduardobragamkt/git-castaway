@@ -1,4 +1,5 @@
 import { MOTHER_REPO_URL } from './config.js';
+import { activeBottles, canReadBottle } from './bottles.js';
 import { buildIslandSpecs, devOptions, loadData, profileUrl, resolveMode } from './data.js';
 import { Island } from './island.js';
 import { islandPosition, worldBounds } from './layout.js';
@@ -57,7 +58,8 @@ const TEXT = {
   },
 }[LANGUAGE];
 
-const BOTTLE_INTERVAL = 26;
+const BOTTLE_CHECK_MS = 5000;
+const BOTTLE_READ_KEY = 'git-castaway:ultima-leitura';
 const DRAG_THRESHOLD = 5;
 const IDLE_AFTER_MS = 5000;
 const ZOOM_MENU_SPACE = 80;
@@ -441,6 +443,7 @@ function buildScene(spec) {
 function stopReading() {
   balloon.hidden = true;
   readingAnchor = null;
+  bottleHeld = false;
 }
 
 function switchView(name, spec = null) {
@@ -565,15 +568,42 @@ function setupKeyboard() {
   });
 }
 
-// Garrafas: mensagens do catálogo ligadas às Issues abertas.
+// Garrafas: ficam na praia por 30 minutos desde a abertura da Issue. O náufrago lê uma
+// vez e volta à rotina, e o intervalo vale mesmo se a página for recarregada.
 
 let bottleIndex = 0;
+let bottleHeld = false;
+let lastBottleRead = readLastBottleTime();
+
+function readLastBottleTime() {
+  try {
+    return Number(localStorage.getItem(BOTTLE_READ_KEY));
+  } catch {
+    return NaN;
+  }
+}
+
+function markBottleRead() {
+  lastBottleRead = Date.now();
+  try {
+    localStorage.setItem(BOTTLE_READ_KEY, String(lastBottleRead));
+  } catch {
+    // Sem armazenamento, o intervalo vale só enquanto a página estiver aberta.
+  }
+}
 
 function deliverBottle() {
-  const messages = appData.garrafas;
-  if (messages.length === 0 || dev.activity || readingAnchor || transition) return;
+  const messages = activeBottles(appData.garrafas);
+  if (messages.length === 0 || dev.activity || readingAnchor || bottleHeld || transition) return;
+  if (!canReadBottle(lastBottleRead)) return;
+
   const message = messages[bottleIndex % messages.length];
+  const viewAtStart = activeView;
+  const pickUp = () => {
+    bottleHeld = true;
+  };
   const openBalloon = (anchorFn) => {
+    if (activeView !== viewAtStart) return;
     balloon.textContent = message[LANGUAGE] ?? message.pt;
     balloon.hidden = false;
     readingAnchor = anchorFn;
@@ -583,24 +613,30 @@ function deliverBottle() {
     if (!scene.spec.principal) return;
     const current = scene;
     bottleIndex += 1;
-    current.collectBottle(null, () => openBalloon(() => current.anchor()), stopReading);
+    markBottleRead();
+    current.collectBottle(pickUp, () => openBalloon(() => current.anchor()), stopReading);
     return;
   }
 
   const main = islands[0];
-  if (!main.isVisible(mapView)) return;
+  if (!main.spec.principal || !main.isVisible(mapView)) return;
   bottleIndex += 1;
-  main.showBottle();
+  markBottleRead();
   main.castaway.collectBottle(
-    () => {
-      main.bottleVisible = false;
-    },
+    pickUp,
     () => {
       const { x, y } = main.castawayWorldPosition();
       openBalloon(() => ({ x, y: y - 24 }));
     },
     stopReading,
   );
+}
+
+// A garrafa continua na areia entre as leituras e some sozinha ao fim da validade.
+function syncBottleOnBeach() {
+  const show = !dev.activity && !bottleHeld && activeBottles(appData.garrafas).length > 0;
+  if (islands[0].spec.principal) islands[0].bottleVisible = show;
+  if (scene?.spec.principal) scene.bottleVisible = show;
 }
 
 // A caixa cai quando este navegador ainda não viu a contagem atual de estrelas.
@@ -648,6 +684,7 @@ function frame(now) {
   const dt = Math.min((now - previousFrame) / 1000, 0.1);
   previousFrame = now;
   ctx.imageSmoothingEnabled = false;
+  syncBottleOnBeach();
 
   if (activeView === 'scene') {
     scene.update(dt);
@@ -657,7 +694,11 @@ function frame(now) {
   }
 
   drawTransition(dt);
-  if (readingAnchor) positionFloating(balloon, readingAnchor());
+  if (readingAnchor) {
+    const offMap = activeView === 'map' && !islands[0].isVisible(mapView);
+    balloon.style.visibility = offMap ? 'hidden' : 'visible';
+    positionFloating(balloon, readingAnchor());
+  }
   if (cardAnchor && !card.hidden) positionFloating(card, cardAnchor(), true);
   requestAnimationFrame(frame);
 }
@@ -698,7 +739,7 @@ async function start() {
     if (startInScene) scene.dropCrate();
     else islands[0].dropCrate();
   }
-  window.setInterval(deliverBottle, BOTTLE_INTERVAL * 1000);
+  window.setInterval(deliverBottle, BOTTLE_CHECK_MS);
   if (!startInScene) window.setTimeout(deliverBottle, 2500);
   requestAnimationFrame(frame);
 }

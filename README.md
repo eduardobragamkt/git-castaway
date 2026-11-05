@@ -11,8 +11,8 @@ Personagem, arte e código são originais. O projeto é uma homenagem ao gênero
 | Ação no GitHub | O que acontece no jogo |
 | --- | --- |
 | Commits públicos nos últimos 3 dias | 0: dorme ou fica triste. 1 a 4: pesca com calma. 5 ou mais: trabalha a todo vapor. |
-| Dar uma estrela | Cai uma caixa de suprimentos, e a ilha ganha melhorias: 1, 3, 5, 10, 25, 50 e 100 estrelas. |
-| [Mandar uma garrafa](https://github.com/eduardobragamkt/git-castaway/issues/new?template=garrafa.yml) | O náufrago recolhe a garrafa na praia e lê a mensagem escolhida. |
+| Dar uma estrela | Cai uma caixa de suprimentos, e a ilha ganha melhorias: 1, 3, 5, 10, 25 e 100 estrelas. |
+| [Mandar uma garrafa](https://github.com/eduardobragamkt/git-castaway/issues/new?template=garrafa.yml) | A garrafa fica na praia por 30 minutos. O náufrago lê a mensagem escolhida e só lê de novo depois de 5 minutos. |
 | [Dar um fork](https://github.com/eduardobragamkt/git-castaway/fork) | Nasce uma nova ilha no arquipélago. |
 
 ## Como explorar
