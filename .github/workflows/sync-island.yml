@@ -9,12 +9,9 @@ on:
   watch:
     types: [started]
   fork:
-  issues:
-    types: [opened, edited, closed, reopened, deleted]
 
 permissions:
   contents: write
-  issues: read
 
 # Em rajadas de eventos, fica uma execução rodando e no máximo uma na fila.
 concurrency:
@@ -23,13 +20,14 @@ concurrency:
 
 jobs:
   sync:
-    # Forks leem o JSON da Mãe, então o workflow só roda no repositório central.
+    # Forks não precisam deste workflow: as ilhas deles vivem na URL da Mãe.
     if: github.repository == 'eduardobragamkt/git-castaway'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      # Actions fixadas por hash, para que uma etiqueta adulterada não mude o que roda aqui.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
 
@@ -39,7 +37,7 @@ jobs:
       - name: Atualizar arquipelago.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Estrelas, Issues e forks precisam aparecer logo, então atualizam menos forks.
+          # Estrelas e forks precisam aparecer logo, então atualizam menos ilhas.
           FORK_REFRESH_BUDGET: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '120' || '20' }}
         run: node scripts/update-data.js
 

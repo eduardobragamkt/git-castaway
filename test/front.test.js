@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildIslandSpecs, dataSources, emptyData, normalizeData, resolveMode } from '../js/data.js';
-import { MOTHER_DATA_URL } from '../js/config.js';
+import {
+  buildIslandSpecs,
+  dataSources,
+  emptyData,
+  findIslandSpec,
+  forkRedirectUrl,
+  normalizeData,
+  requestedIsland,
+} from '../js/data.js';
+import { MOTHER_PAGES_URL } from '../js/config.js';
 import { islandPosition } from '../js/layout.js';
 import { FRAMES, PALETTE } from '../js/sprite-data.js';
 
@@ -9,42 +17,47 @@ function place(hostname, search = '') {
   return { hostname, search };
 }
 
-test('a URL da Mãe abre o arquipélago', () => {
-  assert.equal(resolveMode(place('eduardobragamkt.github.io')).mode, 'arquipelago');
-  assert.equal(resolveMode(place('EDUARDOBRAGAMKT.github.io')).mode, 'arquipelago');
-  assert.equal(resolveMode(place('localhost')).mode, 'arquipelago');
+test('a URL da Mãe e o ambiente local não redirecionam', () => {
+  assert.equal(forkRedirectUrl(place('eduardobragamkt.github.io')), null);
+  assert.equal(forkRedirectUrl(place('EDUARDOBRAGAMKT.github.io')), null);
+  assert.equal(forkRedirectUrl(place('localhost')), null);
+  assert.equal(forkRedirectUrl(place('example.com')), null);
 });
 
-test('a URL de um fork abre o modo solo daquele usuário', () => {
-  assert.deepEqual(resolveMode(place('maria-dev.github.io')), { mode: 'solo', login: 'maria-dev' });
+test('a página de um fork leva à ilha da pessoa na URL única', () => {
+  assert.equal(forkRedirectUrl(place('maria-dev.github.io')), `${MOTHER_PAGES_URL}?ilha=maria-dev`);
 });
 
 test('?ilha aceita apenas um login válido', () => {
-  assert.equal(resolveMode(place('localhost', '?ilha=maria')).login, 'maria');
-  assert.equal(resolveMode(place('localhost', '?ilha=<script>')).mode, 'arquipelago');
+  assert.equal(requestedIsland(place('localhost', '?ilha=maria')), 'maria');
+  assert.equal(requestedIsland(place('localhost', '?ilha=<script>')), null);
+  assert.equal(requestedIsland(place('localhost', '?ilha=a/b')), null);
+  assert.equal(requestedIsland(place('localhost')), null);
 });
 
-test('um fork lê primeiro o JSON da Mãe', () => {
-  assert.equal(dataSources(place('maria-dev.github.io'))[0], MOTHER_DATA_URL);
+test('os dados vêm sempre da própria URL pública', () => {
+  assert.deepEqual(dataSources(place('eduardobragamkt.github.io')), ['data/arquipelago.json']);
 });
 
 test('fixtures só valem em ambiente local e dentro da pasta de testes', () => {
   assert.equal(dataSources(place('localhost', '?dados=test/fixtures/demo.json'))[0], 'test/fixtures/demo.json');
   assert.equal(dataSources(place('localhost', '?dados=../segredo.json'))[0], 'data/arquipelago.json');
-  assert.equal(dataSources(place('maria-dev.github.io', '?dados=test/fixtures/demo.json'))[0], MOTHER_DATA_URL);
+  assert.equal(dataSources(place('eduardobragamkt.github.io', '?dados=test/fixtures/demo.json'))[0], 'data/arquipelago.json');
 });
 
-test('modo solo encontra o fork e cria ilha nova para quem ainda não está no JSON', () => {
+test('o arquipélago encontra o fork e cria ilha nova para quem ainda não está nos dados', () => {
   const data = normalizeData({
     ...emptyData(),
     forks: [{ login: 'Maria', estrelas: 2, commits3d: 6, energia: 'trabalhando' }],
   });
-  const found = buildIslandSpecs(data, { mode: 'solo', login: 'maria' });
-  assert.equal(found.length, 1);
-  assert.equal(found[0].energia, 'trabalhando');
-  const missing = buildIslandSpecs(data, { mode: 'solo', login: 'novo-fork' });
-  assert.equal(missing[0].login, 'novo-fork');
-  assert.equal(missing[0].energia, 'dormindo');
+  const all = buildIslandSpecs(data);
+  assert.equal(all.length, 2);
+  assert.equal(all[0].principal, true);
+  assert.equal(findIslandSpec(all, 'maria').energia, 'trabalhando');
+  assert.equal(buildIslandSpecs(data, 'maria').length, 2);
+  const withNew = buildIslandSpecs(data, 'novo-fork');
+  assert.equal(withNew.length, 3);
+  assert.equal(findIslandSpec(withNew, 'novo-fork').energia, 'dormindo');
 });
 
 test('dados inválidos são saneados', () => {

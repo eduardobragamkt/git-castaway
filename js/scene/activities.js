@@ -453,6 +453,18 @@ export const ACTIVITIES = {
     variants: only(more.poolSquirt),
     weight: ({ energy, night }) => (energy === 'dormindo' || night ? 0 : 1),
   },
+  bottle: {
+    variants: only(more.bottleFromSea),
+    weight: ({ energy, rain }) => (rain ? 0 : energy === 'dormindo' ? 1 : 3),
+  },
+  garden: {
+    variants: { water: more.gardenWater, tend: more.gardenTend },
+    weight: ({ energy, night, rain }) => (energy === 'dormindo' || night || rain ? 0 : 3),
+  },
+  raftWork: {
+    variants: { build: more.raftBuild, collapse: more.raftCollapse, test: more.raftTest },
+    weight: ({ energy, night, rain }) => (energy === 'dormindo' || night || rain ? 0 : 3),
+  },
   shelter: { variants: only(more.rainShelter), weight: ({ rain }) => (rain ? 6 : 0) },
   rainDance: {
     variants: only(more.rainDance),
@@ -583,22 +595,6 @@ export function routeTo(from, to) {
     { x: to.x - direction * 8, y: laneY },
     to,
   ];
-}
-
-export function* collectBottle(onPickUp, onReadStart, onReadEnd) {
-  yield set({ item: null, effect: null, mood: 'surprised', lift: 0 });
-  yield walk(SCENE_SPOTS.bottle);
-  yield set({ facing: 1, mood: 'calm' });
-  yield hold('bend', 0.7);
-  yield emit(onPickUp);
-  yield set({ item: 'paper', mood: 'focused' });
-  yield hold('read', 0.4);
-  yield emit(onReadStart);
-  yield hold('read', 7);
-  yield emit(onReadEnd);
-  yield set({ item: null, mood: 'happy' });
-  yield hold('stand', 0.8);
-  yield set({ mood: 'calm' });
 }
 
 export function* celebrateCrate() {

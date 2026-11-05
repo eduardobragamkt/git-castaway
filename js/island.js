@@ -26,7 +26,6 @@ export class Island {
     this.castaway.clock = (this.seed % 100) / 10;
     this.upgrades = STAR_UPGRADES.filter((upgrade) => spec.estrelas >= upgrade.stars);
     this.time = (this.seed % 500) / 100;
-    this.bottleVisible = false;
     this.drop = null;
     this.avatarImage = null;
   }
@@ -135,7 +134,7 @@ export class Island {
     });
     layers.sort((a, b) => a.depth - b.depth).forEach((layer) => layer.paint());
 
-    if (this.bottleVisible) this.drawBottle(rect);
+    if (this.castaway.bottleOut) this.drawBottle(rect);
     if (this.drop) this.drawDrop(blit, rect, sprites.caixote);
     this.drawNameplate(ctx, S, originX, originY);
   }

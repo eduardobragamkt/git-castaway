@@ -1,7 +1,7 @@
 import { MOTHER_REPO_URL } from './config.js';
-import { activeBottles, canReadBottle } from './bottles.js';
 import { daysOnIsland, pendingMilestones } from './calendar.js';
-import { buildIslandSpecs, devOptions, loadData, profileUrl, resolveMode } from './data.js';
+import { buildIslandSpecs, devOptions, findIslandSpec, forkRedirectUrl, loadData, profileUrl, requestedIsland } from './data.js';
+import { LANGUAGES, TEXTS, initialLanguage } from './i18n.js';
 import { Island } from './island.js';
 import { islandPosition, worldBounds } from './layout.js';
 import { drawOcean } from './ocean.js';
@@ -11,76 +11,20 @@ import { currentHour, paletteAt } from './time.js';
 import { STAR_UPGRADES, nextUpgrade } from './upgrades.js';
 import { cameraAfterZoom, clampScale, clampSceneCamera, fitScale, scaleLimits, stepScale, zoomPercent } from './zoom.js';
 
-const LANGUAGE = (navigator.language ?? 'pt').toLowerCase().startsWith('pt') ? 'pt' : 'en';
-const TEXT = {
-  pt: {
-    archipelago: 'Modo Arquipélago: arraste para navegar',
-    solo: 'Modo Solo',
-    islandOf: (login) => `Ilha de ${login}`,
-    offline: 'Sem dados do GitHub no momento',
-    back: 'Voltar à ilha principal',
-    map: 'Ver mapa',
-    bottle: 'Mandar garrafa',
-    fork: 'Criar minha ilha',
-    profile: 'Ver perfil no GitHub',
-    visit: 'Visitar página da ilha',
-    enter: 'Entrar na ilha',
-    commits: (count) => `${count} ${count === 1 ? 'commit público' : 'commits públicos'} em 3 dias`,
-    days: (count) => `Dia ${count} na ilha`,
-    milestones: {
-      primeiraEstrela: 'Primeira estrela! A ilha já tem fãs.',
-      dezEstrelas: 'Dez estrelas! A ilha está ficando famosa.',
-      cemEstrelas: 'Cem estrelas! Que arquipélago é este?',
-      primeiroFork: 'Primeiro fork! Já tem ilha vizinha.',
-      primeiraGarrafa: 'Primeira garrafa! Alguém lembrou de mim.',
-      dezCommits: 'Dez commits em 3 dias! Que produtividade.',
-      aniversario: 'Feliz aniversário, ilha!',
-    },
-    next: (name, stars) => `Próxima melhoria: ${name} (★ ${stars})`,
-    complete: 'Todas as melhorias conquistadas',
-    energy: { dormindo: 'Dormindo', pescando: 'Pescando de boa', trabalhando: 'A todo vapor' },
-    close: 'Fechar',
-    zoomIn: 'Aproximar',
-    zoomOut: 'Afastar',
-    zoomFit: 'Ajustar à tela',
-    zoomMenu: 'Zoom da tela',
-  },
-  en: {
-    archipelago: 'Archipelago mode: drag to explore',
-    solo: 'Solo mode',
-    islandOf: (login) => `${login}'s island`,
-    offline: 'GitHub data is unavailable right now',
-    back: 'Back to main island',
-    map: 'View map',
-    bottle: 'Send a bottle',
-    fork: 'Create my island',
-    profile: 'View GitHub profile',
-    visit: 'Visit island page',
-    enter: 'Enter island',
-    commits: (count) => `${count} public ${count === 1 ? 'commit' : 'commits'} in 3 days`,
-    days: (count) => `Day ${count} on the island`,
-    milestones: {
-      primeiraEstrela: 'First star! The island has fans.',
-      dezEstrelas: 'Ten stars! The island is getting famous.',
-      cemEstrelas: 'A hundred stars! What an archipelago.',
-      primeiroFork: 'First fork! There is a neighbor island.',
-      primeiraGarrafa: 'First bottle! Someone remembered me.',
-      dezCommits: 'Ten commits in 3 days! So productive.',
-      aniversario: 'Happy birthday, island!',
-    },
-    next: (name, stars) => `Next upgrade: ${name} (★ ${stars})`,
-    complete: 'All upgrades unlocked',
-    energy: { dormindo: 'Sleeping', pescando: 'Fishing', trabalhando: 'Full steam ahead' },
-    close: 'Close',
-    zoomIn: 'Zoom in',
-    zoomOut: 'Zoom out',
-    zoomFit: 'Fit to screen',
-    zoomMenu: 'Screen zoom',
-  },
-}[LANGUAGE];
+const LANGUAGE_KEY = 'git-castaway:idioma';
 
-const BOTTLE_CHECK_MS = 5000;
-const BOTTLE_READ_KEY = 'git-castaway:ultima-leitura';
+function storedLanguage() {
+  try {
+    return localStorage.getItem(LANGUAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+let LANGUAGE = initialLanguage(storedLanguage());
+let TEXT = TEXTS[LANGUAGE];
+
+const MILESTONE_CHECK_MS = 5000;
 const MILESTONES_KEY = 'git-castaway:marcos';
 const DRAG_THRESHOLD = 5;
 const IDLE_AFTER_MS = 5000;
@@ -96,6 +40,14 @@ const zoomLabel = document.getElementById('zoom-valor');
 const zoomInButton = document.getElementById('zoom-mais');
 const zoomOutButton = document.getElementById('zoom-menos');
 const zoomFitButton = document.getElementById('zoom-ajustar');
+const fullscreenButton = document.getElementById('tela-cheia');
+const fullscreenIcon = document.getElementById('icone-tela-cheia');
+const forkButton = document.getElementById('criar-ilha');
+const readMeButton = document.getElementById('leia-me');
+const modalBackdrop = document.getElementById('fundo-modal');
+const modal = document.getElementById('modal');
+const FULLSCREEN_ICON = 'M1 1h5v2H3v3H1V1zm9 0h5v5h-2V3h-3V1zM1 10h2v3h3v2H1v-5zm12 0h2v5h-5v-2h3v-3z';
+const EXIT_FULLSCREEN_ICON = 'M4 1h2v5H1V4h3V1zm6 0h2v3h3v2h-5V1zM1 10h5v5H4v-3H1v-2zm9 0h5v2h-3v3h-2v-5z';
 
 const dev = devOptions(window.location);
 const hourNow = () => dev.hour ?? currentHour(dev.date ?? new Date());
@@ -107,13 +59,15 @@ const mapView = { left: 0, right: 0, top: 0, bottom: 0 };
 
 let appData = null;
 let online = true;
-let modeInfo = null;
 let dpr = 1;
 let activeView = 'map';
 let islands = [];
 let bounds = null;
 let scene = null;
 let readingAnchor = null;
+let balloonText = null;
+let openModal = null;
+let modalTrigger = null;
 let cardAnchor = null;
 let transition = null;
 let idleTimer = null;
@@ -215,13 +169,6 @@ function updateZoomMenu() {
 }
 
 function setupZoomMenu() {
-  document.getElementById('zoom').setAttribute('aria-label', TEXT.zoomMenu);
-  zoomInButton.setAttribute('aria-label', TEXT.zoomIn);
-  zoomInButton.title = TEXT.zoomIn;
-  zoomOutButton.setAttribute('aria-label', TEXT.zoomOut);
-  zoomOutButton.title = TEXT.zoomOut;
-  zoomFitButton.setAttribute('aria-label', TEXT.zoomFit);
-  zoomFitButton.title = TEXT.zoomFit;
   zoomInButton.addEventListener('click', () => zoomBy(1));
   zoomOutButton.addEventListener('click', () => zoomBy(-1));
   zoomFitButton.addEventListener('click', zoomToFit);
@@ -418,10 +365,6 @@ function showCard(spec, anchorFn, onEnter = null) {
     });
     actions.append(enter);
   }
-  if (!spec.principal) {
-    const visit = linkButton(spec.pagesUrl, TEXT.visit, 'botao-secundario');
-    if (visit) actions.append(visit);
-  }
 
   const dayCount = daysOnIsland(spec.criadoEm, dateNow());
   const days = dayCount ? element('p', 'cartao-linha', TEXT.days(dayCount)) : null;
@@ -467,13 +410,36 @@ function buildScene(spec) {
     dateFn: dateNow,
     weatherOverride: dev.weather ?? null,
     tideOverride: dev.tide ?? null,
+    onBottleOpen: (message, source) => {
+      if (activeView === 'scene' && scene === source) {
+        openBalloon(() => message[LANGUAGE], () => source.anchor());
+      }
+    },
+    onBottleClose: (source) => {
+      if (scene === source) stopReading();
+    },
   });
 }
 
 function stopReading() {
   balloon.hidden = true;
   readingAnchor = null;
-  bottleHeld = false;
+  balloonText = null;
+}
+
+function openBalloon(textFn, anchorFn) {
+  balloonText = textFn;
+  balloon.textContent = textFn();
+  balloon.hidden = false;
+  readingAnchor = anchorFn;
+}
+
+// O endereço de cada ilha é `?ilha=login`, dentro da única URL pública.
+function syncIslandUrl(spec) {
+  const url = new URL(window.location.href);
+  if (spec && !spec.principal) url.searchParams.set('ilha', spec.login);
+  else url.searchParams.delete('ilha');
+  window.history.replaceState(null, '', url);
 }
 
 function switchView(name, spec = null) {
@@ -483,8 +449,8 @@ function switchView(name, spec = null) {
   if (name === 'scene') {
     scene = buildScene(spec);
     cameras.scene = { x: 0, y: 0 };
-    if (spec.principal) window.setTimeout(deliverBottle, 2500);
   }
+  syncIslandUrl(name === 'scene' ? spec : null);
   clampCamera();
   updateZoomMenu();
   updateHud();
@@ -530,22 +496,14 @@ function drawTransition(dt) {
 function updateHud() {
   const spec = activeView === 'scene' && scene ? scene.spec : islands[0].spec;
   let label = TEXT.offline;
-  if (online) {
-    if (modeInfo.mode === 'solo') label = TEXT.solo;
-    else label = activeView === 'map' ? TEXT.archipelago : TEXT.islandOf(spec.login);
-  }
+  if (online) label = activeView === 'map' ? TEXT.archipelago : TEXT.islandOf(spec.login);
   document.getElementById('modo').textContent = label;
 
-  const showsMother = spec.principal;
   document.getElementById('estrelas').textContent = spec.estrelas;
-  document.getElementById('issues').textContent = appData.issuesAbertas;
   document.getElementById('forks').textContent = appData.totalForks;
-  document.getElementById('contador-issues').hidden = !showsMother;
-  document.getElementById('contador-forks').hidden = !showsMother;
+  document.getElementById('contador-forks').hidden = !spec.principal;
 
-  if (modeInfo.mode !== 'arquipelago') {
-    backButton.hidden = true;
-  } else if (activeView === 'scene') {
+  if (activeView === 'scene') {
     backButton.hidden = false;
     backButton.textContent = TEXT.map;
   } else {
@@ -555,14 +513,8 @@ function updateHud() {
 }
 
 function setupHud() {
-  const repoUrl = appData.mae.url ?? MOTHER_REPO_URL;
-  const bottleLink = document.getElementById('mandar-garrafa');
-  bottleLink.href = `${repoUrl}/issues/new?template=garrafa.yml`;
-  bottleLink.textContent = TEXT.bottle;
-  const forkLink = document.getElementById('criar-ilha');
-  forkLink.href = `${repoUrl}/fork`;
-  forkLink.textContent = TEXT.fork;
-
+  forkButton.addEventListener('click', () => showModal('fork', forkButton));
+  readMeButton.addEventListener('click', () => showModal('about', readMeButton));
   backButton.addEventListener('click', () => {
     if (activeView === 'scene') {
       startTransition(window.innerWidth / 2, window.innerHeight / 2, () => switchView('map'));
@@ -570,7 +522,161 @@ function setupHud() {
       cameras.map = { x: islands[0].x, y: islands[0].y };
     }
   });
+  modalBackdrop.addEventListener('click', (event) => {
+    if (event.target === modalBackdrop) closeModal();
+  });
+  modal.addEventListener('keydown', keepFocusInModal);
   updateHud();
+}
+
+// Idiomas: inglês por padrão, com a escolha guardada no navegador.
+
+function renderLanguageSwitches() {
+  document.querySelectorAll('[data-idioma]').forEach((holder) => {
+    holder.setAttribute('role', 'group');
+    holder.setAttribute('aria-label', TEXT.languageMenu);
+    holder.replaceChildren(
+      ...LANGUAGES.map((code) => {
+        const button = element('button', null, code.toUpperCase());
+        button.type = 'button';
+        button.setAttribute('aria-pressed', String(code === LANGUAGE));
+        button.addEventListener('click', () => setLanguage(code));
+        return button;
+      }),
+    );
+  });
+}
+
+function applyLanguage() {
+  document.documentElement.lang = LANGUAGE === 'pt' ? 'pt-BR' : 'en';
+  canvas.setAttribute('aria-label', TEXT.canvasLabel);
+  forkButton.textContent = TEXT.fork;
+  readMeButton.textContent = TEXT.readMe;
+  document.getElementById('zoom').setAttribute('aria-label', TEXT.zoomMenu);
+  for (const [button, label] of [
+    [zoomInButton, TEXT.zoomIn],
+    [zoomOutButton, TEXT.zoomOut],
+    [zoomFitButton, TEXT.zoomFit],
+  ]) {
+    button.setAttribute('aria-label', label);
+    button.title = label;
+  }
+  updateFullscreenButton();
+  updateHud();
+  closeCard();
+  if (balloonText) balloon.textContent = balloonText();
+  if (openModal) renderModal();
+  renderLanguageSwitches();
+}
+
+function setLanguage(code) {
+  LANGUAGE = code;
+  TEXT = TEXTS[code];
+  try {
+    localStorage.setItem(LANGUAGE_KEY, code);
+  } catch {
+    // Sem armazenamento, a escolha vale só enquanto a página estiver aberta.
+  }
+  applyLanguage();
+}
+
+// Pop-ups "Criar minha ilha" e "Leia-me"
+
+function renderModal() {
+  const top = element('div', 'modal-topo');
+  const title = element('h2', null, openModal === 'fork' ? TEXT.forkTitle : TEXT.aboutTitle);
+  title.id = 'modal-titulo';
+  const language = element('div', 'idioma');
+  language.dataset.idioma = '';
+  top.append(title, language);
+
+  const close = element('button', 'cartao-fechar', '×');
+  close.type = 'button';
+  close.setAttribute('aria-label', TEXT.close);
+  close.addEventListener('click', closeModal);
+
+  const content = [];
+  if (openModal === 'fork') {
+    const steps = element('ol');
+    TEXT.forkSteps.forEach((step) => steps.append(element('li', null, step)));
+    const repoUrl = appData.mae.url ?? MOTHER_REPO_URL;
+    const action = linkButton(`${repoUrl}/fork`, TEXT.forkAction, 'botao-principal');
+    action.addEventListener('click', closeModal);
+    content.push(steps, action);
+  } else {
+    TEXT.aboutParagraphs.forEach((paragraph) => content.push(element('p', null, paragraph)));
+    content.push(element('p', 'modal-nota', TEXT.aboutNote));
+  }
+  modal.replaceChildren(close, top, ...content);
+  renderLanguageSwitches();
+}
+
+function showModal(kind, trigger) {
+  closeCard();
+  openModal = kind;
+  modalTrigger = trigger;
+  modalBackdrop.hidden = false;
+  document.body.classList.remove('ocioso');
+  renderModal();
+  modal.scrollTop = 0;
+  modal.focus({ preventScroll: true });
+}
+
+function closeModal() {
+  openModal = null;
+  modalBackdrop.hidden = true;
+  modalTrigger?.focus({ preventScroll: true });
+  modalTrigger = null;
+}
+
+function keepFocusInModal(event) {
+  if (event.key !== 'Tab') return;
+  const focusable = [...modal.querySelectorAll('a[href], button')];
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && (document.activeElement === first || document.activeElement === modal)) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+// Tela cheia. Navegadores sem esse recurso, como o do iPhone, não mostram o botão.
+
+function fullscreenElement() {
+  return document.fullscreenElement ?? document.webkitFullscreenElement ?? null;
+}
+
+function toggleFullscreen() {
+  if (fullscreenElement()) {
+    (document.exitFullscreen ?? document.webkitExitFullscreen).call(document);
+    return;
+  }
+  const root = document.documentElement;
+  (root.requestFullscreen ?? root.webkitRequestFullscreen).call(root);
+}
+
+function updateFullscreenButton() {
+  const active = Boolean(fullscreenElement());
+  const label = active ? TEXT.fullscreenExit : TEXT.fullscreenEnter;
+  fullscreenButton.setAttribute('aria-label', label);
+  fullscreenButton.title = label;
+  fullscreenIcon.setAttribute('d', active ? EXIT_FULLSCREEN_ICON : FULLSCREEN_ICON);
+}
+
+function setupFullscreen() {
+  const root = document.documentElement;
+  const supported =
+    Boolean(root.requestFullscreen ?? root.webkitRequestFullscreen) &&
+    Boolean(document.fullscreenEnabled ?? document.webkitFullscreenEnabled);
+  fullscreenButton.hidden = !supported;
+  if (!supported) return;
+  fullscreenButton.addEventListener('click', toggleFullscreen);
+  document.addEventListener('fullscreenchange', updateFullscreenButton);
+  document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
 }
 
 // Painéis somem quando ninguém mexe no mouse, deixando só o quadro vivo.
@@ -579,7 +685,7 @@ function setupIdle() {
     document.body.classList.remove('ocioso');
     window.clearTimeout(idleTimer);
     idleTimer = window.setTimeout(() => {
-      if (card.hidden) document.body.classList.add('ocioso');
+      if (card.hidden && !openModal) document.body.classList.add('ocioso');
     }, IDLE_AFTER_MS);
   };
   ['pointermove', 'pointerdown', 'keydown', 'focusin'].forEach((type) => window.addEventListener(type, wake));
@@ -588,91 +694,30 @@ function setupIdle() {
 
 function setupKeyboard() {
   window.addEventListener('keydown', (event) => {
+    if (openModal) {
+      if (event.key === 'Escape') closeModal();
+      return;
+    }
     if (event.key === '+' || event.key === '=') zoomBy(1);
     else if (event.key === '-') zoomBy(-1);
     else if (event.key === '0') zoomToFit();
     else if (event.key === 'Escape') {
       if (!card.hidden) closeCard();
-      else if (activeView === 'scene' && modeInfo.mode === 'arquipelago') backButton.click();
+      else if (activeView === 'scene' && !fullscreenElement()) backButton.click();
     }
   });
 }
 
-// Garrafas: ficam na praia por 30 minutos desde a abertura da Issue. O náufrago lê uma
-// vez e volta à rotina, e o intervalo vale mesmo se a página for recarregada.
-
-let bottleIndex = 0;
-let bottleHeld = false;
-let lastBottleRead = readLastBottleTime();
-
-function readLastBottleTime() {
-  try {
-    return Number(localStorage.getItem(BOTTLE_READ_KEY));
-  } catch {
-    return NaN;
-  }
-}
-
-function markBottleRead() {
-  lastBottleRead = Date.now();
-  try {
-    localStorage.setItem(BOTTLE_READ_KEY, String(lastBottleRead));
-  } catch {
-    // Sem armazenamento, o intervalo vale só enquanto a página estiver aberta.
-  }
-}
-
-function deliverBottle() {
-  const messages = activeBottles(appData.garrafas);
-  if (messages.length === 0 || dev.activity || readingAnchor || bottleHeld || transition) return;
-  if (!canReadBottle(lastBottleRead)) return;
-
-  const message = messages[bottleIndex % messages.length];
-  const viewAtStart = activeView;
-  const pickUp = () => {
-    bottleHeld = true;
-  };
-  const openBalloon = (anchorFn) => {
-    if (activeView !== viewAtStart) return;
-    balloon.textContent = message[LANGUAGE] ?? message.pt;
-    balloon.hidden = false;
-    readingAnchor = anchorFn;
-  };
-
-  if (activeView === 'scene') {
-    if (!scene.spec.principal) return;
-    const current = scene;
-    bottleIndex += 1;
-    markBottleRead();
-    current.collectBottle(pickUp, () => openBalloon(() => current.anchor()), stopReading);
-    return;
-  }
-
-  const main = islands[0];
-  if (!main.spec.principal || !main.isVisible(mapView)) return;
-  bottleIndex += 1;
-  markBottleRead();
-  main.castaway.collectBottle(
-    pickUp,
-    () => {
-      const { x, y } = main.castawayWorldPosition();
-      openBalloon(() => ({ x, y: y - 24 }));
-    },
-    stopReading,
-  );
-}
-
 // Marcos reais do repositório: cada navegador comemora cada um uma vez.
 function deliverMilestone() {
-  if (activeView !== 'scene' || dev.activity || readingAnchor || bottleHeld || transition) return false;
+  if (activeView !== 'scene' || dev.activity || readingAnchor || transition) return false;
   let seen = [];
   try {
     seen = JSON.parse(localStorage.getItem(MILESTONES_KEY)) ?? [];
   } catch {
     return false;
   }
-  const context = { forks: appData.totalForks, bottles: appData.issuesAbertas };
-  const [milestone] = pendingMilestones(scene.spec, context, seen, dateNow());
+  const [milestone] = pendingMilestones(scene.spec, { forks: appData.totalForks }, seen, dateNow());
   if (!milestone) return false;
   try {
     localStorage.setItem(MILESTONES_KEY, JSON.stringify([...seen, milestone]));
@@ -681,19 +726,8 @@ function deliverMilestone() {
   }
   const key = milestone.startsWith('aniversario') ? 'aniversario' : milestone;
   const current = scene;
-  current.celebrate(() => {
-    balloon.textContent = TEXT.milestones[key];
-    balloon.hidden = false;
-    readingAnchor = () => current.anchor();
-  }, stopReading);
+  current.celebrate(() => openBalloon(() => TEXT.milestones[key], () => current.anchor()), stopReading);
   return true;
-}
-
-// A garrafa continua na areia entre as leituras e some sozinha ao fim da validade.
-function syncBottleOnBeach() {
-  const show = !dev.activity && !bottleHeld && activeBottles(appData.garrafas).length > 0;
-  if (islands[0].spec.principal) islands[0].bottleVisible = show;
-  if (scene?.spec.principal) scene.bottleVisible = show;
 }
 
 // A caixa cai quando este navegador ainda não viu a contagem atual de estrelas.
@@ -746,7 +780,6 @@ function frame(now) {
   if (window.innerWidth === 0 || window.innerHeight === 0) return;
   if (canvas.width === 0 || canvas.height === 0) resize();
   ctx.imageSmoothingEnabled = false;
-  syncBottleOnBeach();
 
   if (activeView === 'scene') {
     scene.update(dt);
@@ -756,21 +789,25 @@ function frame(now) {
   }
 
   drawTransition(dt);
-  if (readingAnchor) {
-    const offMap = activeView === 'map' && !islands[0].isVisible(mapView);
-    balloon.style.visibility = offMap ? 'hidden' : 'visible';
-    positionFloating(balloon, readingAnchor());
-  }
+  if (readingAnchor) positionFloating(balloon, readingAnchor());
   if (cardAnchor && !card.hidden) positionFloating(card, cardAnchor(), true);
 }
 
 async function start() {
-  modeInfo = resolveMode(window.location);
+  // A URL pública é uma só: a página de um fork leva à ilha daquela pessoa na Mãe.
+  const redirect = forkRedirectUrl(window.location);
+  if (redirect) {
+    window.location.replace(redirect);
+    return;
+  }
+
   const loaded = await loadData(window.location);
   appData = loaded.data;
   online = loaded.online;
 
-  islands = buildIslandSpecs(appData, modeInfo).map((spec, index) => {
+  const wantedLogin = requestedIsland(window.location);
+  const specs = buildIslandSpecs(appData, wantedLogin);
+  islands = specs.map((spec, index) => {
     const position = islandPosition(index);
     return new Island(spec, position.x, position.y);
   });
@@ -783,12 +820,15 @@ async function start() {
     // A fonte é opcional: sem ela, os textos usam monospace.
   }
 
-  const onlyOneIsland = modeInfo.mode === 'solo' || islands.length === 1;
-  const startInScene = dev.view === 'cena' || (dev.view !== 'mapa' && onlyOneIsland);
+  const focus = wantedLogin ? findIslandSpec(specs, wantedLogin) : null;
+  const startSpec = focus ?? islands[0].spec;
+  const startInScene = dev.view === 'cena' || (dev.view !== 'mapa' && (Boolean(focus) || islands.length === 1));
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   setupZoomMenu();
+  setupFullscreen();
   setupHud();
-  switchView(startInScene ? 'scene' : 'map', startInScene ? islands[0].spec : null);
+  switchView(startInScene ? 'scene' : 'map', startInScene ? startSpec : null);
+  applyLanguage();
   updateMapView();
   resize();
   window.addEventListener('resize', resize);
@@ -796,14 +836,11 @@ async function start() {
   setupKeyboard();
   setupIdle();
 
-  if (!dev.activity && starsAreNew(islands[0].spec)) {
+  if (!dev.activity && starsAreNew(startSpec)) {
     if (startInScene) scene.dropCrate();
     else islands[0].dropCrate();
   }
-  window.setInterval(() => {
-    if (!deliverMilestone()) deliverBottle();
-  }, BOTTLE_CHECK_MS);
-  if (!startInScene) window.setTimeout(deliverBottle, 2500);
+  window.setInterval(deliverMilestone, MILESTONE_CHECK_MS);
   requestAnimationFrame(frame);
 }
 

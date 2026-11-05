@@ -29,6 +29,8 @@ export const SCENE_SPOTS = {
   bugs: { x: -20, y: 50 },
   turtle: { x: 52, y: 50 },
   shells: { x: 44, y: 53 },
+  garden: { x: -54, y: 51 },
+  raftSide: { x: -102, y: 51 },
 };
 
 export const walk = (spot, extra = {}) => ({ walk: spot, ...extra });

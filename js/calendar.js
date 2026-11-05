@@ -88,13 +88,12 @@ export function isAnniversary(createdAt, now = new Date()) {
 
 // Marcos reais do repositório, no lugar de capítulos fixos. Cada navegador vê cada marco
 // uma vez, e o aniversário uma vez por ano.
-export function pendingMilestones(island, { forks = 0, bottles = 0 } = {}, seen = [], now = new Date()) {
+export function pendingMilestones(island, { forks = 0 } = {}, seen = [], now = new Date()) {
   const reached = [];
   if (island.estrelas >= 1) reached.push('primeiraEstrela');
   if (island.estrelas >= 10) reached.push('dezEstrelas');
   if (island.estrelas >= 100) reached.push('cemEstrelas');
   if (island.principal && forks >= 1) reached.push('primeiroFork');
-  if (island.principal && bottles >= 1) reached.push('primeiraGarrafa');
   if (island.commits3d >= 10) reached.push('dezCommits');
   if (isAnniversary(island.criadoEm, now)) reached.push(`aniversario${now.getFullYear()}`);
   return reached.filter((milestone) => !seen.includes(milestone));

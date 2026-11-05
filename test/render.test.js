@@ -91,6 +91,39 @@ test('uma data comemorativa escolhe o chapéu sem afetar a rotina', () => {
   assert.equal(scene.ambience.holiday, 'natal');
 });
 
+test('a garrafa abre o balão com mensagem nos dois idiomas e o fecha', () => {
+  const order = [];
+  const scene = makeScene({
+    fixedActivity: 'bottle',
+    onBottleOpen: (message) => order.push(['abriu', Boolean(message.pt), Boolean(message.en)]),
+    onBottleClose: () => order.push(['fechou']),
+  });
+  play(scene, 13);
+  assert.deepEqual(order.slice(0, 2), [['abriu', true, true], ['fechou']]);
+  assert.equal(scene.bottleVisible, false);
+});
+
+test('a jangada e o jardim são desenhados em todos os estágios', () => {
+  for (const days of [1, 4, 8, 11, 14, 20, 40, 90]) {
+    const criadoEm = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const scene = makeScene({}, { criadoEm });
+    assert.doesNotThrow(() => play(scene, 2), `dia ${days}`);
+  }
+});
+
+test('a jangada lançada volta como destroço e depois recomeça', () => {
+  const scene = makeScene({ fixedActivity: 'stretch' });
+  play(scene, 0.2);
+  scene.world.handle('raftLaunch');
+  play(scene, 1);
+  assert.equal(scene.world.raft.mode, 'floating');
+  scene.world.handle('raftSink');
+  play(scene, 2);
+  assert.equal(scene.world.raft.mode, 'wreck');
+  play(scene, 13);
+  assert.equal(scene.world.raft.mode, 'beach');
+});
+
 test('marco do repositório entrega balão na ordem certa', () => {
   const order = [];
   const scene = makeScene();

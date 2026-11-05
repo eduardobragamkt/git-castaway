@@ -1,10 +1,9 @@
 // Regras puras do sincronizador: sem rede e sem disco, para serem testáveis.
 
 export const ACTIVITY_WINDOW_DAYS = 3;
-export const BOTTLE_FIELD_LABEL = 'Mensagem da garrafa';
 export const MAX_FORKS = 1000;
+export const MAX_FORK_DEPTH = 3;
 export const FORK_REFRESH_BUDGET = 120;
-export const MAX_BOTTLES = 20;
 export const REFRESH_SLOT_MS = 6 * 60 * 60 * 1000;
 // A busca do GitHub aceita cerca de 30 requisições por minuto.
 export const SEARCH_INTERVAL_MS = 2100;
@@ -30,36 +29,31 @@ export function isRateLimited(status, headers) {
   return headers.get('x-ratelimit-remaining') === '0' || headers.has('retry-after');
 }
 
-export function optionText(message) {
-  return `${message.pt} / ${message.en}`;
-}
-
-// Lê a resposta do dropdown no corpo Markdown gerado por um Issue Form.
-export function parseBottleSelection(body) {
-  if (typeof body !== 'string') return null;
-  const lines = body.split(/\r?\n/);
-  const start = lines.findIndex((line) => line.trim() === `### ${BOTTLE_FIELD_LABEL}`);
-  if (start < 0) return null;
-  for (const line of lines.slice(start + 1)) {
-    const text = line.trim();
-    if (!text) continue;
-    return text.startsWith('#') ? null : text;
+// Percorre a árvore de forks em largura. Só consulta os ramos que têm forks, e cada
+// usuário entra uma vez, o que também impede laços. O dono da Mãe nunca vira fork.
+export async function walkForkTree(
+  fetchChildren,
+  root,
+  { motherOwner = root.split('/')[0], maxForks = MAX_FORKS, maxDepth = MAX_FORK_DEPTH } = {},
+) {
+  const found = [];
+  const seen = new Set([motherOwner.toLowerCase()]);
+  let level = [root];
+  for (let depth = 1; depth <= maxDepth && level.length > 0 && found.length < maxForks; depth += 1) {
+    const nextLevel = [];
+    for (const parent of level) {
+      if (found.length >= maxForks) break;
+      for (const repo of await fetchChildren(parent)) {
+        const login = repo.owner.login.toLowerCase();
+        if (seen.has(login)) continue;
+        seen.add(login);
+        if (found.length < maxForks) found.push(repo);
+        if ((repo.forks_count ?? 0) > 0) nextLevel.push(repo.full_name);
+      }
+    }
+    level = nextLevel;
   }
-  return null;
-}
-
-// Só devolve texto que já está no catálogo versionado. O texto do autor da Issue
-// nunca é copiado, mesmo quando ela foi criada pela API sem passar pelo formulário.
-export function resolveBottle(issue, catalog) {
-  const selection = parseBottleSelection(issue.body);
-  const message =
-    catalog.mensagens.find((candidate) => optionText(candidate) === selection) ?? catalog.fallback;
-  return { numero: issue.number, abertaEm: issue.created_at, id: message.id, pt: message.pt, en: message.en };
-}
-
-// O endpoint /issues também devolve pull requests.
-export function onlyRealIssues(items) {
-  return items.filter((item) => !item.pull_request);
+  return found;
 }
 
 // Escolhe quais forks atualizar nesta execução: primeiro os inéditos, depois uma
@@ -79,13 +73,11 @@ export function pickForksToRefresh(forks, knownLogins, budget = FORK_REFRESH_BUD
 }
 
 export function toForkBase(repo) {
-  const login = repo.owner.login;
   return {
-    login,
+    login: repo.owner.login,
     avatar: repo.owner.avatar_url ?? '',
     repo: repo.name,
     url: repo.html_url,
-    pagesUrl: repo.has_pages ? `https://${login.toLowerCase()}.github.io/${repo.name}/` : null,
     criadoEm: repo.created_at,
     estrelas: repo.stargazers_count ?? 0,
   };

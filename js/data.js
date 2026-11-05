@@ -1,11 +1,4 @@
-import {
-  LOCAL_DATA_URL,
-  MOTHER_DATA_URL,
-  MOTHER_OWNER,
-  MOTHER_PAGES_URL,
-  MOTHER_REPO,
-  MOTHER_REPO_URL,
-} from './config.js';
+import { LOCAL_DATA_URL, MOTHER_OWNER, MOTHER_PAGES_URL, MOTHER_REPO, MOTHER_REPO_URL } from './config.js';
 
 const LOGIN_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$/i;
 const ENERGY_LEVELS = new Set(['dormindo', 'pescando', 'trabalhando']);
@@ -37,31 +30,34 @@ export function devOptions(location) {
   };
 }
 
-// A URL define o modo: a Mãe mostra o arquipélago e um fork mostra só a própria ilha.
-export function resolveMode(location, motherOwner = MOTHER_OWNER) {
-  const requested = new URLSearchParams(location.search).get('ilha');
-  if (requested && LOGIN_PATTERN.test(requested)) return { mode: 'solo', login: requested };
+// A URL pública é uma só. Quem abre a página de um fork vai para a ilha dessa pessoa
+// na URL da Mãe. Isso é um padrão, não um bloqueio: o dono pode editar a própria cópia.
+export function forkRedirectUrl(location, motherOwner = MOTHER_OWNER) {
   const match = location.hostname.toLowerCase().match(/^([a-z0-9-]+)\.github\.io$/);
-  if (match && match[1] !== motherOwner.toLowerCase()) return { mode: 'solo', login: match[1] };
-  return { mode: 'arquipelago', login: null };
+  if (!match || match[1] === motherOwner.toLowerCase()) return null;
+  return `${MOTHER_PAGES_URL}?ilha=${encodeURIComponent(match[1])}`;
+}
+
+// `?ilha=login` é o endereço de cada ilha dentro da URL da Mãe.
+export function requestedIsland(location) {
+  const requested = new URLSearchParams(location.search).get('ilha');
+  return requested && LOGIN_PATTERN.test(requested) ? requested : null;
 }
 
 export function emptyData() {
   return {
     versao: 1,
     geradoEm: null,
-    mae: { owner: MOTHER_OWNER, repo: MOTHER_REPO, url: MOTHER_REPO_URL, pagesUrl: MOTHER_PAGES_URL },
+    mae: { owner: MOTHER_OWNER, repo: MOTHER_REPO, url: MOTHER_REPO_URL },
     ilhaPrincipal: {
       login: MOTHER_OWNER,
       avatar: '',
       url: MOTHER_REPO_URL,
-      pagesUrl: MOTHER_PAGES_URL,
+      criadoEm: null,
       estrelas: 0,
       commits3d: 0,
       energia: 'dormindo',
     },
-    issuesAbertas: 0,
-    garrafas: [],
     totalForks: 0,
     forks: [],
   };
@@ -76,7 +72,6 @@ function normalizeIsland(raw) {
     login: String(raw.login ?? ''),
     avatar: httpsOrNull(raw.avatar),
     url: httpsOrNull(raw.url),
-    pagesUrl: httpsOrNull(raw.pagesUrl),
     criadoEm: typeof raw.criadoEm === 'string' ? raw.criadoEm : null,
     estrelas: Math.max(0, Number(raw.estrelas) || 0),
     commits3d: Math.max(0, Number(raw.commits3d) || 0),
@@ -91,7 +86,6 @@ export function normalizeData(raw) {
     ...raw,
     mae: { ...base.mae, ...raw?.mae },
     ilhaPrincipal: normalizeIsland({ ...base.ilhaPrincipal, ...raw?.ilhaPrincipal }),
-    garrafas: Array.isArray(raw?.garrafas) ? raw.garrafas : [],
     forks: Array.isArray(raw?.forks) ? raw.forks.map(normalizeIsland) : [],
   };
 }
@@ -101,8 +95,7 @@ export function dataSources(location) {
     const fixture = new URLSearchParams(location.search).get('dados');
     return [fixture && /^test\/fixtures\/[\w-]+\.json$/.test(fixture) ? fixture : LOCAL_DATA_URL];
   }
-  // Em um fork, o arquivo local envelhece. O da Mãe é sempre a fonte mais recente.
-  return [MOTHER_DATA_URL, LOCAL_DATA_URL];
+  return [LOCAL_DATA_URL];
 }
 
 export async function loadData(location, fetcher = fetch) {
@@ -117,26 +110,29 @@ export async function loadData(location, fetcher = fetch) {
   return { data: normalizeData(emptyData()), online: false };
 }
 
-// Devolve as ilhas do modo atual. A primeira é sempre o foco da câmera.
-export function buildIslandSpecs(data, modeInfo) {
-  const main = { ...data.ilhaPrincipal, principal: true, garrafas: data.garrafas };
-  const forks = data.forks.map((fork) => ({ ...fork, principal: false, garrafas: [] }));
-  if (modeInfo.mode === 'arquipelago') return [main, ...forks];
-
-  const wanted = modeInfo.login.toLowerCase();
-  if (main.login.toLowerCase() === wanted) return [main];
-  const fork = forks.find((candidate) => candidate.login.toLowerCase() === wanted);
+// Todas as ilhas do arquipélago: a principal primeiro e depois os forks. Quem ainda não
+// está nos dados, como um fork recém-criado, ganha uma ilha nova ao final da lista.
+export function buildIslandSpecs(data, wantedLogin = null) {
+  const main = { ...data.ilhaPrincipal, principal: true };
+  const forks = data.forks.map((fork) => ({ ...fork, principal: false }));
+  const specs = [main, ...forks];
+  if (!wantedLogin || findIslandSpec(specs, wantedLogin)) return specs;
   return [
-    fork ?? {
-      login: modeInfo.login,
+    ...specs,
+    {
+      login: wantedLogin,
       avatar: null,
       url: null,
-      pagesUrl: null,
+      criadoEm: null,
       estrelas: 0,
       commits3d: 0,
       energia: 'dormindo',
       principal: false,
-      garrafas: [],
     },
   ];
+}
+
+export function findIslandSpec(specs, login) {
+  const wanted = login.toLowerCase();
+  return specs.find((spec) => spec.login.toLowerCase() === wanted) ?? null;
 }

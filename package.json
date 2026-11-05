@@ -10,7 +10,6 @@
   "scripts": {
     "dev": "node scripts/dev-server.js",
     "sync": "node scripts/update-data.js",
-    "build:form": "node scripts/build-issue-form.js",
     "test": "node --test"
   }
 }

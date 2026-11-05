@@ -7,22 +7,18 @@ import { setTimeout as wait } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import {
   FORK_REFRESH_BUDGET,
-  MAX_BOTTLES,
-  MAX_FORKS,
   SEARCH_INTERVAL_MS,
   energyLevel,
   isRateLimited,
-  onlyRealIssues,
   pickForksToRefresh,
   recentCommitsQuery,
-  resolveBottle,
   sameContent,
   toForkBase,
+  walkForkTree,
 } from './lib.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUTPUT = join(ROOT, 'data', 'arquipelago.json');
-const CATALOG = join(ROOT, 'data', 'garrafas.json');
 
 class RateLimitError extends Error {}
 
@@ -67,14 +63,28 @@ async function fetchActivity(api, login) {
   return { commits3d, energia: energyLevel(commits3d) };
 }
 
-async function listForks(api, fullName) {
-  const forks = [];
-  for (let page = 1; forks.length < MAX_FORKS; page += 1) {
+async function listChildren(api, fullName) {
+  const children = [];
+  for (let page = 1; ; page += 1) {
     const batch = await api(`/repos/${fullName}/forks?sort=oldest&per_page=100&page=${page}`);
-    forks.push(...batch);
-    if (batch.length < 100) break;
+    children.push(...batch);
+    if (batch.length < 100) return children;
   }
-  return forks.slice(0, MAX_FORKS).map(toForkBase);
+}
+
+// Inclui forks de forks. A busca só usa dados públicos e o mesmo token limitado da Mãe.
+async function listForks(api, fullName) {
+  const fetchChildren = async (parent) => {
+    try {
+      return await listChildren(api, parent);
+    } catch (error) {
+      if (parent === fullName || !(error instanceof HttpError)) throw error;
+      console.warn(`Ignorando forks de ${parent}: ${error.message}`);
+      return [];
+    }
+  };
+  const repos = await walkForkTree(fetchChildren, fullName);
+  return repos.map(toForkBase);
 }
 
 // Falha ou limite em um fork não pode derrubar o arquipélago: a ilha mantém o
@@ -108,17 +118,11 @@ async function main() {
   if (!token || !fullName) throw new Error('Defina GITHUB_TOKEN e GITHUB_REPOSITORY.');
 
   const api = createClient(token);
-  const [catalog, previous] = await Promise.all([readJson(CATALOG), readJson(OUTPUT)]);
+  const previous = await readJson(OUTPUT);
   const repo = await api(`/repos/${fullName}`);
   const owner = repo.owner.login;
-  const pagesUrl = `https://${owner.toLowerCase()}.github.io/${repo.name}/`;
 
-  const [ownerActivity, recentIssues, issueCount, forkBases] = await Promise.all([
-    fetchActivity(api, owner),
-    api(`/repos/${fullName}/issues?state=open&sort=created&direction=desc&per_page=${MAX_BOTTLES}`),
-    api(`/search/issues?q=${encodeURIComponent(`repo:${fullName} is:issue is:open`)}&per_page=1`),
-    listForks(api, fullName),
-  ]);
+  const [ownerActivity, forkBases] = await Promise.all([fetchActivity(api, owner), listForks(api, fullName)]);
 
   const previousByLogin = new Map((previous?.forks ?? []).map((fork) => [fork.login, fork]));
   const refreshed = await refreshForks(api, forkBases, previousByLogin);
@@ -135,19 +139,16 @@ async function main() {
   const next = {
     versao: 1,
     geradoEm: new Date().toISOString(),
-    mae: { owner, repo: repo.name, url: repo.html_url, pagesUrl },
+    mae: { owner, repo: repo.name, url: repo.html_url },
     ilhaPrincipal: {
       login: owner,
       avatar: repo.owner.avatar_url ?? '',
       url: repo.html_url,
-      pagesUrl,
       criadoEm: repo.created_at,
       estrelas: repo.stargazers_count,
       ...ownerActivity,
     },
-    issuesAbertas: issueCount.total_count,
-    garrafas: onlyRealIssues(recentIssues).map((issue) => resolveBottle(issue, catalog)),
-    totalForks: repo.forks_count,
+    totalForks: forks.length,
     forks,
   };
 
@@ -157,7 +158,7 @@ async function main() {
   }
   await writeFile(OUTPUT, `${JSON.stringify(next, null, 2)}\n`);
   console.log(
-    `Arquivo atualizado: ${next.ilhaPrincipal.estrelas} estrelas, ${next.issuesAbertas} issues, ${forks.length} forks.`,
+    `Arquivo atualizado: ${next.ilhaPrincipal.estrelas} estrelas, ${forks.length} forks.`,
   );
 }
 

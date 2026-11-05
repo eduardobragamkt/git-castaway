@@ -4,7 +4,6 @@ import { devOptions, profileUrl } from '../js/data.js';
 import {
   ACTIVITIES,
   SCENE_SPOTS,
-  collectBottle,
   celebrateCrate,
   pickActivity,
   pickVariant,
@@ -68,8 +67,8 @@ test('sempre há exatamente um astro no céu', () => {
   assert.equal(isNight(22), true);
 });
 
-test('o náufrago sem commits só dorme, fica triste ou leva sustos', () => {
-  const allowed = new Set(['sleep', 'sad', 'stretch', 'horizon', 'crabWake']);
+test('o náufrago sem commits só dorme, fica triste, leva sustos ou lê uma garrafa', () => {
+  const allowed = new Set(['sleep', 'sad', 'stretch', 'horizon', 'crabWake', 'bottle']);
   const random = fixedRandom();
   for (let i = 0; i < 400; i += 1) {
     const name = pickActivity({ energy: 'dormindo', commits: 0, stars: 500, night: i % 2 === 0 }, [], random);
@@ -219,10 +218,10 @@ test('escalar a palmeira sempre termina no chão', () => {
   assert.equal(actor.lift, 0);
 });
 
-test('a garrafa interrompe a escalada sem deixá-lo no ar', () => {
+test('uma interrupção durante a escalada não o deixa no ar', () => {
   const actor = new Actor({ energy: 'pescando', fixedActivity: 'coconut', fixedVariant: 'climb', random: fixedRandom() });
   for (let t = 0; t < 3.5; t += 0.05) actor.update(0.05);
-  actor.interrupt(collectBottle(() => {}, () => {}, () => {}));
+  actor.interrupt(celebrateCrate());
   assert.equal(actor.lift, 0);
 });
 
@@ -245,20 +244,20 @@ test('o sorteio não trava em horas longas com qualquer energia', () => {
   }
 });
 
-test('a garrafa interrompe a rotina e entrega o balão na ordem certa', () => {
-  const order = [];
-  const actor = new Actor({ energy: 'dormindo', random: fixedRandom() });
-  runScript(actor, 3);
-  actor.onEvent = (event) => event();
-  actor.interrupt(
-    collectBottle(
-      () => order.push('pegou'),
-      () => order.push('abriu'),
-      () => order.push('fechou'),
-    ),
-  );
-  for (let elapsed = 0; elapsed < 30 && order.length < 3; elapsed += 0.05) actor.update(0.05);
-  assert.deepEqual(order, ['pegou', 'abriu', 'fechou']);
+test('a garrafa chega sozinha, é lida e a rotina continua', () => {
+  const actor = new Actor({ energy: 'pescando', fixedActivity: 'bottle', random: fixedRandom() });
+  const events = [];
+  actor.onEvent = (event) => events.push(event);
+  for (let t = 0; t < 14; t += 0.05) actor.update(0.05);
+  assert.deepEqual(events.slice(0, 4), ['bottleArrive', 'bottlePick', 'bottleOpen', 'bottleClose']);
+});
+
+test('a garrafa aparece como cena comum, sem dominar a rotina', () => {
+  const actor = new Actor({ energy: 'pescando', commits: 3, stars: 0, random: fixedRandom() });
+  for (let t = 0; t < 4 * 3600; t += 0.1) actor.update(0.1);
+  const total = Object.values(actor.timeSpent).reduce((sum, seconds) => sum + seconds, 0);
+  assert.ok(actor.timeSpent.bottle > 0);
+  assert.ok(actor.timeSpent.bottle / total < 0.15, `${Math.round((actor.timeSpent.bottle / total) * 100)}%`);
 });
 
 test('a caixa de suprimentos leva o náufrago até ela', () => {

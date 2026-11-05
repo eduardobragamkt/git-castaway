@@ -5,10 +5,13 @@ import { hashString, makeCanvas } from '../art.js';
 import { daysOnIsland } from '../calendar.js';
 import { isNight, paletteAt } from '../time.js';
 import { hasUpgrade } from '../upgrades.js';
-import { celebrateMilestone, collectBottle, celebrateCrate, SCENE_SPOTS } from './activities.js';
+import { celebrateMilestone, celebrateCrate, SCENE_SPOTS } from './activities.js';
 import { Actor } from './actor.js';
 import { Ambience } from './ambience.js';
 import { Backdrop } from './backdrop.js';
+import { pickBottleMessage } from './messages.js';
+import { gardenBlooms, gardenStage, raftStage } from './progress.js';
+import { drawGarden, drawRaft, drawRaftWreck } from './projects.js';
 import { drawRig } from './rig.js';
 import { PROP_POSITIONS, buildIsland, buildPalm, buildProps, islandFront } from './scene-art.js';
 import { WorldEvents, paintCrab } from './world-events.js';
@@ -32,9 +35,15 @@ export class Scene {
       weatherOverride = null,
       tideOverride = null,
       holidayOverride = null,
+      onBottleOpen = () => {},
+      onBottleClose = () => {},
     },
   ) {
     this.spec = spec;
+    this.onBottleOpen = onBottleOpen;
+    this.onBottleClose = onBottleClose;
+    this.lastBottleId = null;
+    this.readingBottle = false;
     this.hourFn = hourFn;
     this.dateFn = dateFn;
     this.seed = hashString(spec.login || 'ilha');
@@ -139,11 +148,43 @@ export class Scene {
     else if (event === 'waveWipe' && this.castles > 0) {
       this.wave = { x: CASTLE_SLOTS[this.castles - 1].x, time: 0 };
       this.castles -= 1;
-    } else if (typeof event === 'string') this.world.handle(event);
+    } else if (event === 'bottleArrive') this.bottleVisible = true;
+    else if (event === 'bottlePick') this.bottleVisible = false;
+    else if (event === 'bottleOpen') {
+      const message = pickBottleMessage(this.lastBottleId);
+      this.lastBottleId = message.id;
+      this.readingBottle = true;
+      this.onBottleOpen(message, this);
+    } else if (event === 'bottleClose') this.finishBottle();
+    else if (typeof event === 'string') this.world.handle(event);
+  }
+
+  finishBottle() {
+    this.bottleVisible = false;
+    if (!this.readingBottle) return;
+    this.readingBottle = false;
+    this.onBottleClose(this);
   }
 
   celebrate(onStart, onEnd) {
+    this.finishBottle();
     this.actor.interrupt(celebrateMilestone(onStart, onEnd));
+  }
+
+  days() {
+    return daysOnIsland(this.spec.criadoEm, this.dateFn()) ?? 1;
+  }
+
+  drawRaftProject(g) {
+    const { raft } = this.world;
+    if (raft.mode === 'wreck') {
+      drawRaftWreck(g, this.view, raft);
+      return;
+    }
+    const alpha = raft.mode === 'sinking' ? Math.max(0, 1 - raft.age / 1.6) : 1;
+    const sink = raft.mode === 'sinking' ? raft.age * 6 : 0;
+    const bob = raft.mode === 'beach' ? 0 : Math.sin(this.time * 2) * 1;
+    drawRaft(g, this.view, { x: raft.x, y: raft.y + sink + bob, stage: raftStage(this.days()), alpha });
   }
 
   // Marcas no poste: um risco por dia na ilha, agrupados de cinco em cinco.
@@ -170,21 +211,8 @@ export class Scene {
     }
   }
 
-  collectBottle(onPickUp, onReadStart, onReadEnd) {
-    this.bottleVisible = true;
-    this.actor.interrupt(
-      collectBottle(
-        () => {
-          this.bottleVisible = false;
-          onPickUp?.();
-        },
-        onReadStart,
-        onReadEnd,
-      ),
-    );
-  }
-
   dropCrate() {
+    this.finishBottle();
     const { x, y } = PROP_POSITIONS.caixote;
     this.drop = { x, y, height: 170, landed: 0 };
     this.actor.interrupt(celebrateCrate());
@@ -413,6 +441,11 @@ export class Scene {
       paint: () => (this.world.benchDown > 0 ? this.drawFallenBench(g) : this.drawProp(g, 'bancada')),
     });
     layers.push({ depth: 46, paint: () => this.drawTally(g) });
+    layers.push({
+      depth: 50,
+      paint: () => drawGarden(g, view, gardenStage(this.days()), gardenBlooms(spec.commits3d), this.time),
+    });
+    layers.push({ depth: this.world.raft.y, paint: () => this.drawRaftProject(g) });
     if (spec.commits3d > 0 || actor.commits > 0) {
       layers.push({
         depth: PROP_POSITIONS.quadro.y,
@@ -690,6 +723,11 @@ export class Scene {
       const wide = actor.item === 'spyglass';
       rect(eyeX + (f > 0 ? 0 : -14), eyeY - (wide ? 1 : 2), 14, wide ? 3 : 5, '#231a2b');
       rect(eyeX + (f > 0 ? 1 : -13), eyeY - (wide ? 0 : 1), 12, wide ? 1 : 3, '#c9934d');
+    }
+    if (actor.item === 'wateringCan') {
+      rect(hand.x - 5, hand.y - 2, 10, 7, '#231a2b');
+      rect(hand.x - 4, hand.y - 1, 8, 5, '#7f93ad');
+      line(hand.x + f * 5, hand.y + 1, hand.x + f * 11, hand.y - 3, '#5f7288');
     }
     if (actor.item === 'shell') {
       rect(hand.x - 3, hand.y - 4, 7, 5, '#231a2b');

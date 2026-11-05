@@ -13,6 +13,7 @@ import {
 import { ACTIVITIES, pickActivity } from '../js/scene/activities.js';
 import { Actor } from '../js/scene/actor.js';
 import { PAUSE_BEATS, SLEEPY_BEATS, diveClean } from '../js/scene/more-activities.js';
+import { RAFT_STAGES, gardenBlooms, gardenStage, raftStage } from '../js/scene/progress.js';
 
 function fixedRandom() {
   let state = 7;
@@ -79,17 +80,17 @@ test('os dias na ilha começam em 1 e sobem com o tempo', () => {
 
 test('marcos vêm de dados reais e não se repetem', () => {
   const island = { principal: true, estrelas: 12, commits3d: 11, criadoEm: '2026-11-01T10:00:00Z' };
-  const context = { forks: 1, bottles: 1 };
+  const context = { forks: 1 };
   const now = new Date('2026-12-01T12:00:00Z');
   const first = pendingMilestones(island, context, [], now);
-  assert.deepEqual(first, ['primeiraEstrela', 'dezEstrelas', 'primeiroFork', 'primeiraGarrafa', 'dezCommits']);
+  assert.deepEqual(first, ['primeiraEstrela', 'dezEstrelas', 'primeiroFork', 'dezCommits']);
   assert.deepEqual(pendingMilestones(island, context, first, now), []);
   assert.deepEqual(pendingMilestones({ estrelas: 0, commits3d: 0 }, context, [], now), []);
 });
 
 test('fork sem configuração também tem marcos próprios, sem depender de token', () => {
   const fork = { principal: false, estrelas: 1, commits3d: 0, criadoEm: '2026-11-01T10:00:00Z' };
-  assert.deepEqual(pendingMilestones(fork, { forks: 9, bottles: 9 }, [], new Date('2026-12-01T12:00:00Z')), [
+  assert.deepEqual(pendingMilestones(fork, { forks: 9 }, [], new Date('2026-12-01T12:00:00Z')), [
     'primeiraEstrela',
   ]);
 });
@@ -117,12 +118,62 @@ test('cada grupo pedido tem a quantidade de versões próprias combinada', () =>
   assert.ok(SLEEPY_BEATS.every((beat) => PAUSE_BEATS.includes(beat)));
 });
 
-test('nenhuma atividade usa embarcação', () => {
-  const vessel = /boat|raft|ship|canoe|jangada|canoa|barco|navio/i;
+test('barco e canoa não existem nas atividades', () => {
+  const vessel = /boat|ship|canoe|canoa|barco|navio/i;
   for (const [name, activity] of Object.entries(ACTIVITIES)) {
     assert.doesNotMatch(name, vessel);
     for (const variant of Object.keys(activity.variants)) assert.doesNotMatch(variant, vessel);
   }
+});
+
+test('nenhuma cena termina com ele fora da ilha', () => {
+  for (const [name, activity] of Object.entries(ACTIVITIES)) {
+    for (const [variant, script] of Object.entries(activity.variants)) {
+      const actor = new Actor({ energy: 'pescando', commits: 4, stars: 120, random: fixedRandom() });
+      actor.interrupt(script(actor));
+      let elapsed = 0;
+      while (actor.current === 'interrupt' && elapsed < 120) {
+        actor.update(0.05);
+        elapsed += 0.05;
+      }
+      assert.ok(elapsed < 120, `${name}/${variant} não terminou`);
+      assert.ok(Math.abs(actor.x) <= 152, `${name}/${variant} terminou em x=${actor.x}`);
+      assert.equal(actor.lift, 0, `${name}/${variant} terminou no ar`);
+    }
+  }
+});
+
+test('a jangada sempre afunda e o deixa de volta na praia', () => {
+  const events = [];
+  const actor = new Actor({ energy: 'pescando', fixedActivity: 'raftWork', fixedVariant: 'test', random: fixedRandom() });
+  actor.onEvent = (event) => events.push(event);
+  let reachedSea = false;
+  for (let t = 0; t < 12; t += 0.05) {
+    actor.update(0.05);
+    if (actor.x < -154) reachedSea = true;
+  }
+  assert.ok(reachedSea);
+  assert.ok(events.indexOf('raftLaunch') < events.indexOf('raftSink'));
+  assert.ok(events.includes('raftSink'));
+  assert.ok(Math.abs(actor.x) <= 152);
+});
+
+test('a jangada cresce em etapas e recomeça sem nunca terminar', () => {
+  assert.equal(raftStage(1), 0);
+  assert.equal(raftStage(4), 1);
+  assert.equal(raftStage(13), RAFT_STAGES - 1);
+  assert.equal(raftStage(16), 0);
+  assert.equal(raftStage(null), 0);
+  for (let days = 1; days < 500; days += 1) {
+    assert.ok(raftStage(days) >= 0 && raftStage(days) < RAFT_STAGES);
+  }
+});
+
+test('o jardim cresce com os dias e floresce com commits', () => {
+  assert.deepEqual([1, 3, 7, 14, 30, 60, 400].map(gardenStage), [1, 2, 3, 4, 5, 6, 6]);
+  assert.equal(gardenStage(null), 1);
+  assert.equal(gardenBlooms(0), false);
+  assert.equal(gardenBlooms(2), true);
 });
 
 test('todas as pausas terminam e o náufrago volta à rotina', () => {

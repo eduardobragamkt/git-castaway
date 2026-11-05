@@ -15,6 +15,9 @@ const FONT = {
 };
 const CONFETTI_COLORS = ['#ea7a3a', '#f2c94c', '#57d36b', '#7fd0e8', '#f4ecd8', '#d84f3f'];
 const SHELL_COLORS = ['#fff0e4', '#ffd9c8', '#f4dfa6'];
+export const RAFT_BEACH = { x: -124, y: 55 };
+const RAFT_SEA_X = -172;
+const RAFT_WRECK_SECONDS = 12;
 
 function paint(g, x, y, w, h, color) {
   g.fillStyle = color;
@@ -96,6 +99,8 @@ export class WorldEvents {
     this.parcel = null;
     this.plank = 0;
     this.shells = [];
+    this.drops = 0;
+    this.raft = { mode: 'beach', x: RAFT_BEACH.x, y: RAFT_BEACH.y, age: 0 };
   }
 
   actorHead() {
@@ -196,6 +201,19 @@ export class WorldEvents {
         break;
       case 'confetti':
         this.launchConfetti();
+        break;
+      case 'waterDrops':
+        this.drops = 3.2;
+        break;
+      case 'raftLaunch':
+        this.raft = { mode: 'floating', x: RAFT_BEACH.x, y: RAFT_BEACH.y, age: 0 };
+        break;
+      case 'raftSink':
+        this.raft.mode = 'sinking';
+        this.raft.age = 0;
+        break;
+      case 'raftWreck':
+        this.raft = { mode: 'wreck', x: RAFT_BEACH.x, y: RAFT_BEACH.y, age: 0 };
         break;
       default:
     }
@@ -318,8 +336,24 @@ export class WorldEvents {
     });
     this.confetti = this.confetti.filter((piece) => piece.age < 3.4);
 
+    this.drops = Math.max(0, this.drops - dt);
+    this.updateRaft(dt);
     this.updatePerch(dt);
     this.updateVisitors(dt, left, right);
+  }
+
+  // Lançada, a jangada afunda e sempre volta em pedaços para a praia. Ela nunca o leva embora.
+  updateRaft(dt) {
+    const { raft } = this;
+    raft.age += dt;
+    if (raft.mode === 'floating') {
+      raft.x = Math.max(RAFT_SEA_X, raft.x - 28 * dt);
+      raft.y = Math.min(61, raft.y + 3 * dt);
+    } else if (raft.mode === 'sinking' && raft.age >= 1.6) {
+      this.raft = { mode: 'wreck', x: RAFT_BEACH.x, y: RAFT_BEACH.y, age: 0 };
+    } else if (raft.mode === 'wreck' && raft.age >= RAFT_WRECK_SECONDS) {
+      this.raft = { mode: 'beach', x: RAFT_BEACH.x, y: RAFT_BEACH.y, age: 0 };
+    }
   }
 
   updatePerch(dt) {
@@ -482,6 +516,12 @@ export class WorldEvents {
     const toX = (x) => Math.round(x - view.left);
     const toY = (y) => Math.round(y - view.top);
 
+    if (this.drops > 0) {
+      for (let i = 0; i < 7; i += 1) {
+        const fall = (this.time * 1.9 + i * 0.15) % 1;
+        paint(g, toX(actor.x + actor.facing * (14 + i * 2)), toY(actor.y - 22 + fall * 24), 1, 2, '#8dd3e8');
+      }
+    }
     if (this.sosLetters > 0) {
       g.globalAlpha = this.sosFade > 0 ? Math.max(0, this.sosFade / 0.7) : 1;
       drawText(g, 'SOS'.slice(0, this.sosLetters), toX(10), toY(47), 2, '#a98d5b');

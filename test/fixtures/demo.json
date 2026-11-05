@@ -4,39 +4,17 @@
   "mae": {
     "owner": "eduardobragamkt",
     "repo": "git-castaway",
-    "url": "https://github.com/eduardobragamkt/git-castaway",
-    "pagesUrl": "https://eduardobragamkt.github.io/git-castaway/"
+    "url": "https://github.com/eduardobragamkt/git-castaway"
   },
   "ilhaPrincipal": {
     "login": "eduardobragamkt",
     "avatar": "",
     "url": "https://github.com/eduardobragamkt/git-castaway",
-    "pagesUrl": "https://eduardobragamkt.github.io/git-castaway/",
     "estrelas": 120,
     "commits3d": 7,
-    "energia": "trabalhando"
+    "energia": "trabalhando",
+    "criadoEm": "2026-08-01T12:00:00Z"
   },
-  "issuesAbertas": 3,
-  "garrafas": [
-    {
-      "numero": 2,
-      "id": "push-force",
-      "pt": "Fiz push --force e acordei aqui.",
-      "en": "I ran push --force and woke up here."
-    },
-    {
-      "numero": 8,
-      "id": "minha-ilha",
-      "pt": "Funciona na minha ilha.",
-      "en": "Works on my island."
-    },
-    {
-      "numero": 20,
-      "id": "vim",
-      "pt": "Socorro! Alguém sabe como sair do Vim?",
-      "en": "Help! Does anyone know how to exit Vim?"
-    }
-  ],
   "totalForks": 40,
   "forks": [
     {
@@ -44,8 +22,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-06-01T00:00:00Z",
       "estrelas": 0,
       "commits3d": 0,
       "energia": "dormindo"
@@ -55,8 +32,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-06-06T00:00:00Z",
       "estrelas": 1,
       "commits3d": 3,
       "energia": "pescando"
@@ -66,8 +42,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-06-11T00:00:00Z",
       "estrelas": 3,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -77,8 +52,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-06-16T00:00:00Z",
       "estrelas": 5,
       "commits3d": 0,
       "energia": "dormindo"
@@ -88,8 +62,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-06-21T00:00:00Z",
       "estrelas": 10,
       "commits3d": 3,
       "energia": "pescando"
@@ -99,8 +72,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-06-26T00:00:00Z",
       "estrelas": 25,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -110,8 +82,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-07-01T00:00:00Z",
       "estrelas": 50,
       "commits3d": 0,
       "energia": "dormindo"
@@ -121,8 +92,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-07-06T00:00:00Z",
       "estrelas": 100,
       "commits3d": 3,
       "energia": "pescando"
@@ -132,8 +102,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-07-11T00:00:00Z",
       "estrelas": 0,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -143,8 +112,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-07-16T00:00:00Z",
       "estrelas": 1,
       "commits3d": 0,
       "energia": "dormindo"
@@ -154,8 +122,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-07-21T00:00:00Z",
       "estrelas": 3,
       "commits3d": 3,
       "energia": "pescando"
@@ -165,8 +132,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-07-26T00:00:00Z",
       "estrelas": 5,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -176,8 +142,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-07-31T00:00:00Z",
       "estrelas": 10,
       "commits3d": 0,
       "energia": "dormindo"
@@ -187,8 +152,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-08-05T00:00:00Z",
       "estrelas": 25,
       "commits3d": 3,
       "energia": "pescando"
@@ -198,8 +162,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-08-10T00:00:00Z",
       "estrelas": 50,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -209,8 +172,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-08-15T00:00:00Z",
       "estrelas": 100,
       "commits3d": 0,
       "energia": "dormindo"
@@ -220,8 +182,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-08-20T00:00:00Z",
       "estrelas": 0,
       "commits3d": 3,
       "energia": "pescando"
@@ -231,8 +192,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-08-25T00:00:00Z",
       "estrelas": 1,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -242,8 +202,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-08-30T00:00:00Z",
       "estrelas": 3,
       "commits3d": 0,
       "energia": "dormindo"
@@ -253,8 +212,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-09-04T00:00:00Z",
       "estrelas": 5,
       "commits3d": 3,
       "energia": "pescando"
@@ -264,8 +222,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-09-09T00:00:00Z",
       "estrelas": 10,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -275,8 +232,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-09-14T00:00:00Z",
       "estrelas": 25,
       "commits3d": 0,
       "energia": "dormindo"
@@ -286,8 +242,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-09-19T00:00:00Z",
       "estrelas": 50,
       "commits3d": 3,
       "energia": "pescando"
@@ -297,8 +252,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-09-24T00:00:00Z",
       "estrelas": 100,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -308,8 +262,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-09-29T00:00:00Z",
       "estrelas": 0,
       "commits3d": 0,
       "energia": "dormindo"
@@ -319,8 +272,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-10-04T00:00:00Z",
       "estrelas": 1,
       "commits3d": 3,
       "energia": "pescando"
@@ -330,8 +282,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-10-09T00:00:00Z",
       "estrelas": 3,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -341,8 +292,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-10-14T00:00:00Z",
       "estrelas": 5,
       "commits3d": 0,
       "energia": "dormindo"
@@ -352,8 +302,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-10-19T00:00:00Z",
       "estrelas": 10,
       "commits3d": 3,
       "energia": "pescando"
@@ -363,8 +312,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-10-24T00:00:00Z",
       "estrelas": 25,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -374,8 +322,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-10-29T00:00:00Z",
       "estrelas": 50,
       "commits3d": 0,
       "energia": "dormindo"
@@ -385,8 +332,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-11-03T00:00:00Z",
       "estrelas": 100,
       "commits3d": 3,
       "energia": "pescando"
@@ -396,8 +342,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-11-08T00:00:00Z",
       "estrelas": 0,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -407,8 +352,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-11-13T00:00:00Z",
       "estrelas": 1,
       "commits3d": 0,
       "energia": "dormindo"
@@ -418,8 +362,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-11-18T00:00:00Z",
       "estrelas": 3,
       "commits3d": 3,
       "energia": "pescando"
@@ -429,8 +372,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-11-23T00:00:00Z",
       "estrelas": 5,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -440,8 +382,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-11-28T00:00:00Z",
       "estrelas": 10,
       "commits3d": 0,
       "energia": "dormindo"
@@ -451,8 +392,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-12-03T00:00:00Z",
       "estrelas": 25,
       "commits3d": 3,
       "energia": "pescando"
@@ -462,8 +402,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-12-08T00:00:00Z",
       "estrelas": 50,
       "commits3d": 9,
       "energia": "trabalhando"
@@ -473,8 +412,7 @@
       "avatar": "",
       "repo": "git-castaway",
       "url": "https://github.com/eduardobragamkt/git-castaway",
-      "pagesUrl": null,
-      "criadoEm": "2026-11-01T00:00:00Z",
+      "criadoEm": "2026-12-13T00:00:00Z",
       "estrelas": 100,
       "commits3d": 0,
       "energia": "dormindo"

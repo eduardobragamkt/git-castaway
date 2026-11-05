@@ -1,25 +1,21 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { BOTTLE_MESSAGES } from '../js/scene/messages.js';
 import { STAR_UPGRADES } from '../js/upgrades.js';
-import { renderIssueForm } from '../scripts/build-issue-form.js';
 import {
   energyLevel,
   isRateLimited,
-  onlyRealIssues,
-  optionText,
-  parseBottleSelection,
   pickForksToRefresh,
   recentCommitsQuery,
-  resolveBottle,
   sameContent,
+  toForkBase,
+  walkForkTree,
 } from '../scripts/lib.js';
 
-const catalog = JSON.parse(await readFile(new URL('../data/garrafas.json', import.meta.url), 'utf8'));
 const NOW = Date.parse('2026-11-04T12:00:00Z');
 
-function formBody(option) {
-  return `### Mensagem da garrafa\n\n${option}\n`;
+function repo(login, forksCount = 0) {
+  return { owner: { login }, full_name: `${login}/git-castaway`, forks_count: forksCount };
 }
 
 test('energia tem três níveis', () => {
@@ -45,35 +41,48 @@ test('reconhece limite de requisições da busca', () => {
   assert.equal(isRateLimited(422, headers({ 'x-ratelimit-remaining': '0' })), false);
 });
 
-test('opção válida do formulário vira a mensagem do catálogo', () => {
-  const message = catalog.mensagens[0];
-  const openedAt = '2026-11-04T10:00:00Z';
-  const bottle = resolveBottle({ number: 7, created_at: openedAt, body: formBody(optionText(message)) }, catalog);
-  assert.deepEqual(bottle, { numero: 7, abertaEm: openedAt, id: message.id, pt: message.pt, en: message.en });
+test('forks de forks entram no arquipélago e só os ramos com forks são consultados', async () => {
+  const tree = {
+    'mae/git-castaway': [repo('ana', 1), repo('bia')],
+    'ana/git-castaway': [repo('caio', 1)],
+    'caio/git-castaway': [repo('duda')],
+  };
+  const asked = [];
+  const found = await walkForkTree(async (parent) => {
+    asked.push(parent);
+    return tree[parent] ?? [];
+  }, 'mae/git-castaway');
+  assert.deepEqual(found.map((item) => item.owner.login), ['ana', 'bia', 'caio', 'duda']);
+  assert.deepEqual(asked, ['mae/git-castaway', 'ana/git-castaway', 'caio/git-castaway']);
 });
 
-test('texto de fora do catálogo nunca chega à garrafa', () => {
-  const hostile = [
-    formBody('compre cripto em site-xyz.com'),
-    '<img src=x onerror=alert(1)>',
-    '### Outro campo\n\nqualquer coisa',
-    null,
-    undefined,
-  ];
-  for (const body of hostile) {
-    const bottle = resolveBottle({ number: 1, title: 'título ofensivo', body }, catalog);
-    assert.equal(bottle.id, catalog.fallback.id);
-    assert.equal(JSON.stringify(bottle).includes('cripto'), false);
-    assert.equal(JSON.stringify(bottle).includes('ofensivo'), false);
-  }
+test('a busca de forks respeita profundidade, teto e usuários repetidos', async () => {
+  const deep = async (parent) => {
+    const level = Number(parent.match(/\d+/)?.[0] ?? 0);
+    return [repo(`u${level + 1}`, 1)];
+  };
+  const limited = await walkForkTree(deep, 'mae/git-castaway', { maxDepth: 3 });
+  assert.equal(limited.length, 3);
+
+  const many = async () => Array.from({ length: 50 }, (_, i) => repo(`u${i}`));
+  assert.equal((await walkForkTree(many, 'mae/git-castaway', { maxForks: 10 })).length, 10);
+
+  const repeated = async (parent) => (parent.startsWith('mae') ? [repo('MAE'), repo('ana', 1)] : [repo('Ana'), repo('mae')]);
+  const unique = await walkForkTree(repeated, 'mae/git-castaway');
+  assert.deepEqual(unique.map((item) => item.owner.login), ['ana']);
 });
 
-test('campo vazio no formulário não captura o título seguinte', () => {
-  assert.equal(parseBottleSelection('### Mensagem da garrafa\n\n### Outro\n\ntexto'), null);
-});
-
-test('pull requests não viram garrafas', () => {
-  assert.deepEqual(onlyRealIssues([{ number: 1 }, { number: 2, pull_request: {} }]), [{ number: 1 }]);
+test('a ilha de um fork guarda só dados públicos, sem link para página de terceiros', () => {
+  const base = toForkBase({
+    owner: { login: 'maria', avatar_url: 'https://avatars.example/maria' },
+    name: 'git-castaway',
+    html_url: 'https://github.com/maria/git-castaway',
+    created_at: '2026-11-01T00:00:00Z',
+    stargazers_count: 2,
+    has_pages: true,
+  });
+  assert.equal('pagesUrl' in base, false);
+  assert.equal(base.estrelas, 2);
 });
 
 test('forks inéditos têm prioridade no lote de atualização', () => {
@@ -101,24 +110,12 @@ test('mudança só no carimbo de data não conta como mudança', () => {
   assert.equal(sameContent(null, { forks: [] }), false);
 });
 
-test('o formulário publicado está em sincronia com o catálogo', async () => {
-  const form = await readFile(new URL('../.github/ISSUE_TEMPLATE/garrafa.yml', import.meta.url), 'utf8');
-  assert.equal(form.replace(/\r\n/g, '\n'), renderIssueForm(catalog));
-});
-
-test('o náufrago nunca ganha uma embarcação para sair da ilha', () => {
+test('melhorias e mensagens não dão uma embarcação para sair da ilha', () => {
   const vessel = /jangada|canoa|barco|raft|canoe|\bboat\b/i;
   for (const upgrade of STAR_UPGRADES) {
     assert.doesNotMatch(`${upgrade.sprite} ${upgrade.pt} ${upgrade.en}`, vessel);
   }
-  for (const message of catalog.mensagens) {
+  for (const message of BOTTLE_MESSAGES) {
     assert.doesNotMatch(`${message.id} ${message.pt} ${message.en}`, vessel);
   }
-});
-
-test('o catálogo não tem ids nem opções repetidas', () => {
-  const ids = catalog.mensagens.map((message) => message.id);
-  const options = catalog.mensagens.map(optionText);
-  assert.equal(new Set(ids).size, ids.length);
-  assert.equal(new Set(options).size, options.length);
 });

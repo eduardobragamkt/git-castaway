@@ -1,6 +1,7 @@
 // Máquina de estados do náufrago. O JSON escolhe a rotina; cada rotina é uma fila de passos.
 
 const WALK_SPEED = 20;
+const BOTTLE_CHANCE = 0.12;
 
 function between(min, max) {
   return min + Math.random() * (max - min);
@@ -56,21 +57,23 @@ export class Castaway {
     this.stepTime = 0;
     this.pose = 'idle';
     this.effect = null;
+    this.bottleOut = false;
   }
 
-  // A garrafa interrompe a rotina: o náufrago vai até ela, pega e lê.
-  collectBottle(onPickUp, onReadStart, onReadEnd) {
-    this.queue = [
-      { walk: this.spots.bottle },
-      { pose: 'bend', seconds: 0.9, face: 1, then: onPickUp },
-      { pose: 'read', seconds: 7, effect: 'paper', face: 1, begin: onReadStart, then: onReadEnd },
+  // De vez em quando chega uma garrafa: ele pega, lê e volta à rotina.
+  bottleSteps() {
+    return [
+      { walk: this.spots.bottle, begin: () => { this.bottleOut = true; } },
+      { pose: 'bend', seconds: 0.9, face: 1, then: () => { this.bottleOut = false; } },
+      { pose: 'read', seconds: 3.5, effect: 'paper', face: 1 },
     ];
-    this.step = null;
-    this.effect = null;
   }
 
   nextStep() {
-    if (this.queue.length === 0) this.queue = ROUTINES[this.energy](this);
+    if (this.queue.length === 0) {
+      const wantsBottle = this.energy !== 'dormindo' && Math.random() < BOTTLE_CHANCE;
+      this.queue = [...(wantsBottle ? this.bottleSteps() : []), ...ROUTINES[this.energy](this)];
+    }
     this.step = this.queue.shift();
     this.stepTime = 0;
     this.effect = this.step.effect ?? null;
