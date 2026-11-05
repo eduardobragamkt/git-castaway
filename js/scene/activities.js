@@ -465,7 +465,10 @@ export const ACTIVITIES = {
       head: coconutOnHead,
       success: coconutSuccess,
     },
-    weight: ({ energy, night }) => (energy === 'dormindo' || night ? 0 : 5),
+    weight: ({ energy, night }) => {
+      if (energy === 'dormindo') return 0;
+      return night ? 3 : 5;
+    },
   },
   hammer: {
     variants: { steady: hammerSteady, thumb: hammerThumb },
