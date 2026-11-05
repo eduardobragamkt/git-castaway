@@ -5,6 +5,7 @@ import { STAR_UPGRADES } from '../js/upgrades.js';
 import {
   energyLevel,
   isRateLimited,
+  listForkPages,
   pickForksToRefresh,
   recentCommitsQuery,
   sameContent,
@@ -70,6 +71,19 @@ test('a busca de forks respeita profundidade, teto e usuários repetidos', async
   const repeated = async (parent) => (parent.startsWith('mae') ? [repo('MAE'), repo('ana', 1)] : [repo('Ana'), repo('mae')]);
   const unique = await walkForkTree(repeated, 'mae/git-castaway');
   assert.deepEqual(unique.map((item) => item.owner.login), ['ana']);
+});
+
+test('um ramo com forks demais não consome páginas além do teto', async () => {
+  let requests = 0;
+  const huge = await listForkPages(async () => {
+    requests += 1;
+    return Array.from({ length: 100 }, (_, i) => repo(`u${requests}-${i}`));
+  }, 250);
+  assert.equal(huge.length, 250);
+  assert.equal(requests, 3);
+
+  const small = await listForkPages(async () => [repo('ana')], 250);
+  assert.equal(small.length, 1);
 });
 
 test('a ilha de um fork guarda só dados públicos, sem link para página de terceiros', () => {

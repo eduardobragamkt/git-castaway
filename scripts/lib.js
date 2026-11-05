@@ -29,6 +29,18 @@ export function isRateLimited(status, headers) {
   return headers.get('x-ratelimit-remaining') === '0' || headers.has('retry-after');
 }
 
+// Lê as páginas de forks de um repositório, sem passar do teto, para que um único ramo
+// muito grande não gaste todo o limite de requisições da API.
+export async function listForkPages(fetchPage, limit = MAX_FORKS, pageSize = 100) {
+  const children = [];
+  for (let page = 1; children.length < limit; page += 1) {
+    const batch = await fetchPage(page);
+    children.push(...batch);
+    if (batch.length < pageSize) break;
+  }
+  return children.slice(0, limit);
+}
+
 // Percorre a árvore de forks em largura. Só consulta os ramos que têm forks, e cada
 // usuário entra uma vez, o que também impede laços. O dono da Mãe nunca vira fork.
 export async function walkForkTree(

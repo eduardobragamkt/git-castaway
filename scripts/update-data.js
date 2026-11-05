@@ -10,6 +10,7 @@ import {
   SEARCH_INTERVAL_MS,
   energyLevel,
   isRateLimited,
+  listForkPages,
   pickForksToRefresh,
   recentCommitsQuery,
   sameContent,
@@ -63,13 +64,8 @@ async function fetchActivity(api, login) {
   return { commits3d, energia: energyLevel(commits3d) };
 }
 
-async function listChildren(api, fullName) {
-  const children = [];
-  for (let page = 1; ; page += 1) {
-    const batch = await api(`/repos/${fullName}/forks?sort=oldest&per_page=100&page=${page}`);
-    children.push(...batch);
-    if (batch.length < 100) return children;
-  }
+function listChildren(api, fullName) {
+  return listForkPages((page) => api(`/repos/${fullName}/forks?sort=oldest&per_page=100&page=${page}`));
 }
 
 // Inclui forks de forks. A busca só usa dados públicos e o mesmo token limitado da Mãe.
