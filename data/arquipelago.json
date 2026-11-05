@@ -1,32 +1,20 @@
 {
   "versao": 1,
-  "geradoEm": "2026-11-05T12:09:28.744Z",
+  "geradoEm": "2026-11-05T13:48:08.705Z",
   "mae": {
     "owner": "eduardobragamkt",
     "repo": "git-castaway",
-    "url": "https://github.com/eduardobragamkt/git-castaway",
-    "pagesUrl": "https://eduardobragamkt.github.io/git-castaway/"
+    "url": "https://github.com/eduardobragamkt/git-castaway"
   },
   "ilhaPrincipal": {
     "login": "eduardobragamkt",
     "avatar": "https://avatars.githubusercontent.com/u/267752846?v=4",
     "url": "https://github.com/eduardobragamkt/git-castaway",
-    "pagesUrl": "https://eduardobragamkt.github.io/git-castaway/",
     "criadoEm": "2026-11-04T23:55:28Z",
     "estrelas": 0,
-    "commits3d": 6,
+    "commits3d": 8,
     "energia": "trabalhando"
   },
-  "issuesAbertas": 1,
-  "garrafas": [
-    {
-      "numero": 2,
-      "abertaEm": "2026-11-05T00:01:25Z",
-      "id": "gaivota",
-      "pt": "Uma gaivota roubou meu sanduíche e meu token.",
-      "en": "A seagull stole my sandwich and my token."
-    }
-  ],
   "totalForks": 0,
   "forks": []
 }
