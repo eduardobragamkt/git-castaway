@@ -50,6 +50,7 @@ export const TEXTS = {
       'Some programs stay with us for a long time. For me, one of them is Johnny Castaway, the classic 1992 screensaver: a castaway, a tiny island, and little stories unfolding while the computer rested.',
       'I always loved the idea that there was life in there, even when nobody was watching. One day I wondered: what if that feeling became a game? What if everyone could have their own island, powered by what they create?',
       "That is how Git Castaway was born. Every fork brings an island to life, and every castaway lives to the rhythm of its owner's public commits. He never leaves the island, but the archipelago can keep on growing.",
+      "No two days on the island are the same. He fishes, tends his garden, keeps working on a raft that refuses to cooperate, and battles the coconuts, which usually win. His mood follows his owner's public commits: when the work is flowing, he is full of energy; without any, he spends much of his time asleep or feeling down. The sky, the weather and the tide change too, and every now and then someone or something shows up.",
       'Feel free to just sit back and watch. That was always the charm.',
     ],
     aboutNote:
@@ -100,6 +101,7 @@ export const TEXTS = {
       'Alguns programas ficam com a gente por muito tempo. Para mim, um deles é o Johnny Castaway, o clássico protetor de tela de 1992: um náufrago, uma ilhota e pequenas histórias acontecendo enquanto o computador descansava.',
       'Sempre gostei da ideia de que havia vida ali, mesmo quando ninguém estava olhando. Um dia, pensei: e se essa sensação virasse um jogo? E se cada pessoa pudesse ter a própria ilha, movida por aquilo que cria?',
       'Assim nasceu o Git Castaway. Cada fork faz nascer uma ilha, e cada náufrago vive no ritmo dos commits públicos do seu dono. Ele nunca sai da ilha, mas o arquipélago pode crescer sem parar.',
+      'Os dias na ilha nunca são iguais. Ele pesca, cuida do jardim, insiste em uma jangada que não colabora e briga com os cocos, que quase sempre vencem. O humor dele acompanha os commits públicos do dono: com o trabalho em dia, sobra energia; sem nenhum, ele passa boa parte do tempo dormindo ou cabisbaixo. O céu, o clima e a maré também mudam, e de vez em quando alguém ou alguma coisa aparece por lá.',
       'Fique à vontade para só ficar olhando. Sempre foi esse o encanto.',
     ],
     aboutNote:

@@ -45,6 +45,9 @@ test('os textos aprovados estão no pop-up Leia-me', () => {
   assert.equal(TEXTS.pt.forkAction, 'Ir pra criação da minha ilha');
   assert.equal(TEXTS.en.forkAction, 'Go create my island');
   assert.equal(TEXTS.pt.aboutParagraphs.at(-1), 'Fique à vontade para só ficar olhando. Sempre foi esse o encanto.');
+  assert.equal(TEXTS.en.aboutParagraphs.at(-1), 'Feel free to just sit back and watch. That was always the charm.');
+  assert.match(TEXTS.pt.aboutParagraphs.at(-2), /^Os dias na ilha nunca são iguais\./);
+  assert.match(TEXTS.en.aboutParagraphs.at(-2), /^No two days on the island are the same\./);
 });
 
 test('o pop-up do fork não pede para ativar página própria', () => {
