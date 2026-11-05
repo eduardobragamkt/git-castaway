@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "geradoEm": "2026-11-04T23:57:06.966Z",
+  "geradoEm": "2026-11-05T00:01:36.434Z",
   "mae": {
     "owner": "eduardobragamkt",
     "repo": "git-castaway",
@@ -16,8 +16,15 @@
     "pushes3d": 0,
     "energia": "dormindo"
   },
-  "issuesAbertas": 0,
-  "garrafas": [],
+  "issuesAbertas": 1,
+  "garrafas": [
+    {
+      "numero": 2,
+      "id": "gaivota",
+      "pt": "Uma gaivota roubou meu sanduíche e meu token.",
+      "en": "A seagull stole my sandwich and my token."
+    }
+  ],
   "totalForks": 0,
   "forks": []
 }
