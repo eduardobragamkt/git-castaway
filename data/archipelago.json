@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-05T15:26:27.612Z",
+  "generatedAt": "2026-11-05T15:32:50.813Z",
   "mother": {
     "owner": "eduardobragamkt",
     "repo": "git-castaway",
@@ -12,9 +12,20 @@
     "url": "https://github.com/eduardobragamkt/git-castaway",
     "createdAt": "2026-11-04T23:55:28Z",
     "stars": 0,
-    "commits3d": 11,
+    "commits3d": 12,
     "energy": "working"
   },
-  "totalForks": 0,
-  "forks": []
+  "totalForks": 1,
+  "forks": [
+    {
+      "login": "Ti-V4-Saman",
+      "avatar": "https://avatars.githubusercontent.com/u/193948757?v=4",
+      "repo": "git-castaway",
+      "url": "https://github.com/Ti-V4-Saman/git-castaway",
+      "createdAt": "2026-11-05T15:32:00Z",
+      "stars": 0,
+      "commits3d": 0,
+      "energy": "sleeping"
+    }
+  ]
 }
