@@ -41,7 +41,7 @@ export class Scene {
     }
     this.actor = new Actor({
       energy: spec.energia,
-      pushes: spec.pushes3d,
+      commits: spec.commits3d,
       stars: spec.estrelas,
       night: () => isNight(this.hourFn()),
       onEvent: (event) => this.handleEvent(event),
@@ -54,7 +54,7 @@ export class Scene {
     this.time = this.seed % 100;
     this.bottleVisible = false;
     this.castles = 0;
-    this.commitTiles = Math.min(spec.pushes3d, 24);
+    this.commitTiles = Math.min(spec.commits3d, 24);
     this.tileFlash = 0;
     this.falling = [];
     this.footprints = [];
@@ -278,7 +278,7 @@ export class Scene {
       layers.push({ depth: PROP_POSITIONS.jangada.y, paint: () => this.drawMooredRaft(g) });
     }
     layers.push({ depth: PROP_POSITIONS.bancada.y, paint: () => this.drawProp(g, 'bancada') });
-    if (spec.pushes3d > 0 || actor.pushes > 0) {
+    if (spec.commits3d > 0 || actor.commits > 0) {
       layers.push({
         depth: PROP_POSITIONS.quadro.y,
         paint: () => {

@@ -142,7 +142,7 @@ function* warmHands(a) {
 export const ACTIVITIES = {
   fish: { run: fish, weight: ({ energy }) => ({ pescando: 6, trabalhando: 2 })[energy] ?? 0 },
   hammer: { run: hammer, weight: ({ energy }) => ({ trabalhando: 6, pescando: 1 })[energy] ?? 0 },
-  commitBoard: { run: commitBoard, weight: ({ energy, pushes }) => (energy !== 'dormindo' && pushes > 0 ? 3 : 0) },
+  commitBoard: { run: commitBoard, weight: ({ energy, commits }) => (energy !== 'dormindo' && commits > 0 ? 3 : 0) },
   sandcastle: { run: sandcastle, weight: ({ energy, night }) => (energy !== 'dormindo' && !night ? 2 : 0) },
   coconut: { run: coconut, weight: ({ energy, night }) => (energy !== 'dormindo' && !night ? 2 : 0) },
   horizon: { run: horizon, weight: ({ energy, night }) => (night ? 0 : energy === 'dormindo' ? 1 : 2) },

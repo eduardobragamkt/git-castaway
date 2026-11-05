@@ -23,7 +23,7 @@ const TEXT = {
     profile: 'Ver perfil no GitHub',
     visit: 'Visitar página da ilha',
     enter: 'Entrar na ilha',
-    pushes: (count) => `${count} ${count === 1 ? 'push público' : 'pushes públicos'} em 3 dias`,
+    commits: (count) => `${count} ${count === 1 ? 'commit público' : 'commits públicos'} em 3 dias`,
     next: (name, stars) => `Próxima melhoria: ${name} (★ ${stars})`,
     complete: 'Todas as melhorias conquistadas',
     energy: { dormindo: 'Dormindo', pescando: 'Pescando de boa', trabalhando: 'A todo vapor' },
@@ -45,7 +45,7 @@ const TEXT = {
     profile: 'View GitHub profile',
     visit: 'Visit island page',
     enter: 'Enter island',
-    pushes: (count) => `${count} public ${count === 1 ? 'push' : 'pushes'} in 3 days`,
+    commits: (count) => `${count} public ${count === 1 ? 'commit' : 'commits'} in 3 days`,
     next: (name, stars) => `Next upgrade: ${name} (★ ${stars})`,
     complete: 'All upgrades unlocked',
     energy: { dormindo: 'Sleeping', pescando: 'Fishing', trabalhando: 'Full steam ahead' },
@@ -359,11 +359,11 @@ function showCard(spec, anchorFn, onEnter = null) {
 
   const meter = element('div', 'cartao-energia');
   meter.setAttribute('role', 'img');
-  meter.setAttribute('aria-label', TEXT.pushes(spec.pushes3d));
+  meter.setAttribute('aria-label', TEXT.commits(spec.commits3d));
   for (let i = 0; i < 5; i += 1) {
-    meter.append(element('span', i < spec.pushes3d ? 'cheio' : null));
+    meter.append(element('span', i < spec.commits3d ? 'cheio' : null));
   }
-  const activity = element('p', 'cartao-linha', TEXT.pushes(spec.pushes3d));
+  const activity = element('p', 'cartao-linha', TEXT.commits(spec.commits3d));
 
   const upcoming = nextUpgrade(spec.estrelas);
   const previousStars = upcoming

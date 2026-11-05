@@ -3,21 +3,31 @@
 export const ACTIVITY_WINDOW_DAYS = 3;
 export const BOTTLE_FIELD_LABEL = 'Mensagem da garrafa';
 export const MAX_FORKS = 1000;
-export const FORK_REFRESH_BUDGET = 200;
+export const FORK_REFRESH_BUDGET = 120;
 export const MAX_BOTTLES = 20;
 export const REFRESH_SLOT_MS = 6 * 60 * 60 * 1000;
+// A busca do GitHub aceita cerca de 30 requisições por minuto.
+export const SEARCH_INTERVAL_MS = 2100;
 
-export function energyLevel(pushes) {
-  if (pushes <= 0) return 'dormindo';
-  if (pushes < 5) return 'pescando';
+export function energyLevel(commits) {
+  if (commits <= 0) return 'dormindo';
+  if (commits < 5) return 'pescando';
   return 'trabalhando';
 }
 
-export function countRecentPushes(events, now = Date.now(), days = ACTIVITY_WINDOW_DAYS) {
-  const cutoff = now - days * 24 * 60 * 60 * 1000;
-  return events.filter(
-    (event) => event.type === 'PushEvent' && Date.parse(event.created_at) >= cutoff,
-  ).length;
+// A busca conta commits públicos pela autoria, inclusive os enviados por merge na
+// interface web, que nem sempre aparecem na API de eventos. O limite superior da
+// janela ignora commits com data no futuro.
+export function recentCommitsQuery(login, now = Date.now(), days = ACTIVITY_WINDOW_DAYS) {
+  const iso = (time) => new Date(time).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const from = iso(now - days * 24 * 60 * 60 * 1000);
+  return `author:${login} author-date:${from}..${iso(now)}`;
+}
+
+export function isRateLimited(status, headers) {
+  if (status === 429) return true;
+  if (status !== 403) return false;
+  return headers.get('x-ratelimit-remaining') === '0' || headers.has('retry-after');
 }
 
 export function optionText(message) {

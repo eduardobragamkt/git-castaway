@@ -1,6 +1,6 @@
 # Git Castaway
 
-Um arquipélago vivo em pixel art, movido pela atividade pública do GitHub. Cada fork vira uma ilha, e cada náufrago vive de acordo com os pushes do seu dono.
+Um arquipélago vivo em pixel art, movido pela atividade pública do GitHub. Cada fork vira uma ilha, e cada náufrago vive de acordo com os commits públicos do seu dono.
 
 **Jogue:** https://eduardobragamkt.github.io/git-castaway/
 
@@ -10,7 +10,7 @@ Personagem, arte e código são originais. O projeto é uma homenagem ao gênero
 
 | Ação no GitHub | O que acontece no jogo |
 | --- | --- |
-| Pushes públicos nos últimos 3 dias | 0: dorme ou fica triste. 1 a 4: pesca. 5 ou mais: trabalha animado. |
+| Commits públicos nos últimos 3 dias | 0: dorme ou fica triste. 1 a 4: pesca com calma. 5 ou mais: trabalha a todo vapor. |
 | Dar uma estrela | Cai uma caixa de suprimentos, e a ilha ganha melhorias: 1, 3, 5, 10, 25, 50 e 100 estrelas. |
 | [Mandar uma garrafa](https://github.com/eduardobragamkt/git-castaway/issues/new?template=garrafa.yml) | O náufrago recolhe a garrafa na praia e lê a mensagem escolhida. |
 | [Dar um fork](https://github.com/eduardobragamkt/git-castaway/fork) | Nasce uma nova ilha no arquipélago. |
@@ -73,6 +73,6 @@ js/scene/                    cena de tela cheia: céu, mar, esqueleto e atividad
 
 ## Limites conhecidos
 
-- A atividade conta apenas eventos públicos. Pushes em repositórios privados não aparecem.
-- O arquipélago mostra até 1000 forks. A atividade é atualizada em lotes de 200 por execução, então uma rodada completa pode levar pouco mais de um dia.
+- A atividade vem da busca de commits do GitHub, que conta commits públicos indexados. Repositórios privados e commits fora da branch padrão não aparecem, e a indexação pode atrasar.
+- O arquipélago mostra até 1000 forks. A busca tem limite de requisições, então a atividade é atualizada em lotes: 120 forks em execuções agendadas e 20 nas causadas por estrelas, Issues ou forks. Uma rodada completa com 1000 forks pode levar cerca de dois dias.
 - O GitHub Pages pode levar alguns minutos para publicar cada atualização.

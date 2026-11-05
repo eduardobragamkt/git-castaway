@@ -60,11 +60,11 @@ test('sempre há exatamente um astro no céu', () => {
   assert.equal(isNight(22), true);
 });
 
-test('o náufrago sem pushes só dorme, fica triste ou se espreguiça', () => {
+test('o náufrago sem commits só dorme, fica triste ou se espreguiça', () => {
   const allowed = new Set(['sleep', 'sad', 'stretch', 'horizon']);
   const random = fixedRandom();
   for (let i = 0; i < 400; i += 1) {
-    const name = pickActivity({ energy: 'dormindo', pushes: 0, stars: 500, night: i % 2 === 0 }, null, random);
+    const name = pickActivity({ energy: 'dormindo', commits: 0, stars: 500, night: i % 2 === 0 }, null, random);
     assert.ok(allowed.has(name), name);
   }
 });
@@ -74,7 +74,7 @@ test('a energia muda a atividade mais frequente', () => {
     const tally = {};
     const random = fixedRandom();
     for (let i = 0; i < 2000; i += 1) {
-      const name = pickActivity({ energy, pushes: 3, stars: 0, night: false }, null, random);
+      const name = pickActivity({ energy, commits: 3, stars: 0, night: false }, null, random);
       tally[name] = (tally[name] ?? 0) + 1;
     }
     return Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0];
@@ -87,7 +87,7 @@ test('a mesma atividade não se repete em seguida', () => {
   const random = fixedRandom();
   let last = null;
   for (let i = 0; i < 300; i += 1) {
-    const name = pickActivity({ energy: 'pescando', pushes: 2, stars: 10, night: false }, last, random);
+    const name = pickActivity({ energy: 'pescando', commits: 2, stars: 10, night: false }, last, random);
     assert.notEqual(name, last);
     last = name;
   }
@@ -109,7 +109,7 @@ function runScript(actor, seconds) {
 
 test('cada atividade termina e usa apenas poses existentes', () => {
   for (const name of Object.keys(ACTIVITIES)) {
-    const actor = new Actor({ energy: 'pescando', fixedActivity: name, pushes: 3, stars: 100, random: fixedRandom() });
+    const actor = new Actor({ energy: 'pescando', fixedActivity: name, commits: 3, stars: 100, random: fixedRandom() });
     runScript(actor, 90);
     assert.ok(Number.isFinite(actor.x) && Number.isFinite(actor.y), name);
     for (const value of Object.values(actor.pose)) assert.ok(Number.isFinite(value), name);
@@ -128,7 +128,7 @@ test('todas as poses têm os mesmos campos', () => {
 test('o sorteio não trava em horas longas com qualquer energia', () => {
   for (const energy of ENERGIES) {
     for (const night of [false, true]) {
-      const actor = new Actor({ energy, pushes: 3, stars: 100, night: () => night, random: fixedRandom() });
+      const actor = new Actor({ energy, commits: 3, stars: 100, night: () => night, random: fixedRandom() });
       runScript(actor, 600);
       assert.equal(actor.pose.hipY < 0, true);
     }

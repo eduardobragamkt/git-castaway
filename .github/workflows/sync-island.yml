@@ -39,6 +39,8 @@ jobs:
       - name: Atualizar arquipelago.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Estrelas, Issues e forks precisam aparecer logo, então atualizam menos forks.
+          FORK_REFRESH_BUDGET: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '120' || '20' }}
         run: node scripts/update-data.js
 
       - name: Publicar mudanças

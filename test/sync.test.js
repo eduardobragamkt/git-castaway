@@ -3,12 +3,13 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { renderIssueForm } from '../scripts/build-issue-form.js';
 import {
-  countRecentPushes,
   energyLevel,
+  isRateLimited,
   onlyRealIssues,
   optionText,
   parseBottleSelection,
   pickForksToRefresh,
+  recentCommitsQuery,
   resolveBottle,
   sameContent,
 } from '../scripts/lib.js';
@@ -27,14 +28,20 @@ test('energia tem três níveis', () => {
   assert.equal(energyLevel(5), 'trabalhando');
 });
 
-test('só conta PushEvent dentro da janela de 3 dias', () => {
-  const events = [
-    { type: 'PushEvent', created_at: '2026-11-04T10:00:00Z' },
-    { type: 'PushEvent', created_at: '2026-11-01T12:00:00Z' },
-    { type: 'PushEvent', created_at: '2026-11-01T11:59:59Z' },
-    { type: 'WatchEvent', created_at: '2026-11-04T10:00:00Z' },
-  ];
-  assert.equal(countRecentPushes(events, NOW), 2);
+test('a busca cobre os últimos 3 dias e ignora datas no futuro', () => {
+  assert.equal(
+    recentCommitsQuery('maria-dev', NOW),
+    'author:maria-dev author-date:2026-11-01T12:00:00Z..2026-11-04T12:00:00Z',
+  );
+});
+
+test('reconhece limite de requisições da busca', () => {
+  const headers = (entries) => new Headers(entries);
+  assert.equal(isRateLimited(429, headers({})), true);
+  assert.equal(isRateLimited(403, headers({ 'x-ratelimit-remaining': '0' })), true);
+  assert.equal(isRateLimited(403, headers({ 'retry-after': '60' })), true);
+  assert.equal(isRateLimited(403, headers({ 'x-ratelimit-remaining': '12' })), false);
+  assert.equal(isRateLimited(422, headers({ 'x-ratelimit-remaining': '0' })), false);
 });
 
 test('opção válida do formulário vira a mensagem do catálogo', () => {

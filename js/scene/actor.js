@@ -8,9 +8,9 @@ const WALK_SPEED = 30;
 const POSE_SPEED = 11;
 
 export class Actor {
-  constructor({ energy, pushes = 0, stars = 0, night = () => false, onEvent = () => {}, fixedActivity = null, random = Math.random }) {
+  constructor({ energy, commits = 0, stars = 0, night = () => false, onEvent = () => {}, fixedActivity = null, random = Math.random }) {
     this.energy = energy;
-    this.pushes = pushes;
+    this.commits = commits;
     this.stars = stars;
     this.isNight = night;
     this.onEvent = onEvent;
@@ -36,7 +36,7 @@ export class Actor {
   }
 
   context() {
-    return { energy: this.energy, pushes: this.pushes, stars: this.stars, night: this.isNight() };
+    return { energy: this.energy, commits: this.commits, stars: this.stars, night: this.isNight() };
   }
 
   // Interrompe a atividade atual e volta ao sorteio quando o novo roteiro termina.

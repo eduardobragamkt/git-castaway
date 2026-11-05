@@ -51,7 +51,7 @@ export function emptyData() {
       url: MOTHER_REPO_URL,
       pagesUrl: MOTHER_PAGES_URL,
       estrelas: 0,
-      pushes3d: 0,
+      commits3d: 0,
       energia: 'dormindo',
     },
     issuesAbertas: 0,
@@ -72,7 +72,7 @@ function normalizeIsland(raw) {
     url: httpsOrNull(raw.url),
     pagesUrl: httpsOrNull(raw.pagesUrl),
     estrelas: Math.max(0, Number(raw.estrelas) || 0),
-    pushes3d: Math.max(0, Number(raw.pushes3d) || 0),
+    commits3d: Math.max(0, Number(raw.commits3d) || 0),
     energia: ENERGY_LEVELS.has(raw.energia) ? raw.energia : 'dormindo',
   };
 }
@@ -126,7 +126,7 @@ export function buildIslandSpecs(data, modeInfo) {
       url: null,
       pagesUrl: null,
       estrelas: 0,
-      pushes3d: 0,
+      commits3d: 0,
       energia: 'dormindo',
       principal: false,
       garrafas: [],

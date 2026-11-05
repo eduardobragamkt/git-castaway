@@ -37,7 +37,7 @@ test('fixtures só valem em ambiente local e dentro da pasta de testes', () => {
 test('modo solo encontra o fork e cria ilha nova para quem ainda não está no JSON', () => {
   const data = normalizeData({
     ...emptyData(),
-    forks: [{ login: 'Maria', estrelas: 2, pushes3d: 6, energia: 'trabalhando' }],
+    forks: [{ login: 'Maria', estrelas: 2, commits3d: 6, energia: 'trabalhando' }],
   });
   const found = buildIslandSpecs(data, { mode: 'solo', login: 'maria' });
   assert.equal(found.length, 1);

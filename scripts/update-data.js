@@ -3,15 +3,18 @@
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { setTimeout as wait } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import {
   FORK_REFRESH_BUDGET,
   MAX_BOTTLES,
   MAX_FORKS,
-  countRecentPushes,
+  SEARCH_INTERVAL_MS,
   energyLevel,
+  isRateLimited,
   onlyRealIssues,
   pickForksToRefresh,
+  recentCommitsQuery,
   resolveBottle,
   sameContent,
   toForkBase,
@@ -20,7 +23,6 @@ import {
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUTPUT = join(ROOT, 'data', 'arquipelago.json');
 const CATALOG = join(ROOT, 'data', 'garrafas.json');
-const REFRESH_CONCURRENCY = 8;
 
 class RateLimitError extends Error {}
 
@@ -41,8 +43,7 @@ function createClient(token) {
         'x-github-api-version': '2022-11-28',
       },
     });
-    const exhausted = response.headers.get('x-ratelimit-remaining') === '0';
-    if (response.status === 429 || (response.status === 403 && exhausted)) {
+    if (isRateLimited(response.status, response.headers)) {
       throw new RateLimitError(`Limite da API atingido em ${path}`);
     }
     if (!response.ok) throw new HttpError(response.status, path);
@@ -60,9 +61,10 @@ async function readJson(path) {
 }
 
 async function fetchActivity(api, login) {
-  const events = await api(`/users/${encodeURIComponent(login)}/events/public?per_page=100`);
-  const pushes3d = countRecentPushes(events);
-  return { pushes3d, energia: energyLevel(pushes3d) };
+  const query = encodeURIComponent(recentCommitsQuery(login));
+  const result = await api(`/search/commits?q=${query}&per_page=1`);
+  const commits3d = result.total_count;
+  return { commits3d, energia: energyLevel(commits3d) };
 }
 
 async function listForks(api, fullName) {
@@ -78,29 +80,24 @@ async function listForks(api, fullName) {
 // Falha ou limite em um fork não pode derrubar o arquipélago: a ilha mantém o
 // último estado conhecido e será visitada de novo em uma próxima janela.
 async function refreshForks(api, forks, previousByLogin) {
-  const queue = pickForksToRefresh(forks, new Set(previousByLogin.keys()), FORK_REFRESH_BUDGET);
+  const budget = Number(process.env.FORK_REFRESH_BUDGET) || FORK_REFRESH_BUDGET;
+  const queue = pickForksToRefresh(forks, new Set(previousByLogin.keys()), budget);
   const refreshed = new Map();
-  let stopped = false;
 
-  async function worker() {
-    while (!stopped && queue.length > 0) {
-      const fork = queue.shift();
-      try {
-        refreshed.set(fork.login, await fetchActivity(api, fork.login));
-      } catch (error) {
-        if (error instanceof RateLimitError) {
-          stopped = true;
-          console.warn('Limite da API atingido. Os demais forks ficam para a próxima execução.');
-        } else if (!(error instanceof HttpError)) {
-          throw error;
-        } else {
-          console.warn(`Ignorando atividade de ${fork.login}: ${error.message}`);
-        }
+  for (const fork of queue) {
+    await wait(SEARCH_INTERVAL_MS);
+    try {
+      refreshed.set(fork.login, await fetchActivity(api, fork.login));
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        console.warn('Limite da API atingido. Os demais forks ficam para a próxima execução.');
+        break;
       }
+      if (!(error instanceof HttpError)) throw error;
+      console.warn(`Ignorando atividade de ${fork.login}: ${error.message}`);
     }
   }
 
-  await Promise.all(Array.from({ length: REFRESH_CONCURRENCY }, worker));
   console.log(`Forks: ${forks.length} no total, ${refreshed.size} atualizados nesta execução.`);
   return refreshed;
 }
@@ -129,7 +126,7 @@ async function main() {
   const forks = forkBases.map((fork) => {
     const known = previousByLogin.get(fork.login);
     const activity = refreshed.get(fork.login) ?? {
-      pushes3d: known?.pushes3d ?? 0,
+      commits3d: known?.commits3d ?? 0,
       energia: known?.energia ?? 'dormindo',
     };
     return { ...fork, ...activity };
