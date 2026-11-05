@@ -124,6 +124,14 @@ test('a jangada lançada volta como destroço e depois recomeça', () => {
   assert.equal(scene.world.raft.mode, 'beach');
 });
 
+test('o farol distante da abertura é desenhado em qualquer horário', () => {
+  for (const hour of [7, 12, 18.5, 23]) {
+    const scene = makeScene({ hour });
+    scene.showDistantLight = true;
+    assert.doesNotThrow(() => play(scene, 1), `${hour}h`);
+  }
+});
+
 test('marco do repositório entrega balão na ordem certa', () => {
   const order = [];
   const scene = makeScene();

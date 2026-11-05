@@ -20,6 +20,7 @@ Personagem, arte e código são originais. O projeto é uma homenagem ao gênero
 - **Cena da ilha:** um quadro de tela cheia que segue o horário local do visitante, do amanhecer à noite.
 - **Personagem:** clique no náufrago para ver energia, estrelas, próxima melhoria e o perfil público do dono da ilha no GitHub.
 - **Zoom e tela cheia:** use o menu da tela, a roda do mouse, o gesto de pinça ou as teclas `+`, `-` e `0`. O botão de tela cheia não aparece em navegadores sem esse recurso, como o do iPhone.
+- **Abertura:** toca na primeira visita. Qualquer tecla, clique ou toque pula, e o botão "Intro" repete.
 - **Idioma:** inglês por padrão, com os botões `EN | PT` no painel do título. A escolha fica guardada no navegador.
 - **Endereço de cada ilha:** `https://eduardobragamkt.github.io/git-castaway/?ilha=login`.
 
@@ -66,8 +67,9 @@ Parâmetros de teste em `http://localhost:4173`:
 | `?data=2026-12-25T21:00` | Simula uma data, útil para as datas comemorativas |
 | `?clima=chuva` ou `?clima=calor` | Força o clima |
 | `?mare=0` | Força a maré: de `0` (baixa) a `1` (alta) |
+| `?abertura=1` | Toca a abertura mesmo em visitas seguintes |
 
-Os parâmetros `dados`, `visao`, `hora`, `cena`, `variante`, `data`, `clima` e `mare` só funcionam em ambiente local.
+Os parâmetros `dados`, `visao`, `hora`, `cena`, `variante`, `data`, `clima`, `mare` e `abertura` só funcionam em ambiente local.
 
 ```text
 data/arquipelago.json        estado do jogo, gerado pelo workflow

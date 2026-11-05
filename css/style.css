@@ -94,6 +94,75 @@ body.ocioso #mar {
   overflow-wrap: anywhere;
 }
 
+#abertura {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+#abertura-cortina {
+  position: absolute;
+  inset: 0;
+  background: #05060f;
+}
+
+#abertura-terminal {
+  position: absolute;
+  bottom: 9%;
+  left: 5%;
+  max-width: calc(100vw - 32px);
+  padding: 0.7em 1em;
+  background: rgba(5, 10, 22, 0.86);
+  border: 2px solid var(--gold);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  font-size: clamp(18px, 2.2vw, 28px);
+  line-height: 1.45;
+  color: var(--gold);
+}
+
+.abertura-linha {
+  min-height: 1.45em;
+  overflow-wrap: anywhere;
+  transition: opacity 0.2s;
+}
+
+.abertura-linha.anterior {
+  opacity: 0.45;
+}
+
+.abertura-linha.atual::after {
+  content: '';
+  display: inline-block;
+  width: 0.5em;
+  height: 0.95em;
+  margin-left: 0.15em;
+  vertical-align: -0.1em;
+  background: var(--gold);
+}
+
+#abertura-pular {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  margin: 0;
+  color: var(--paper);
+  opacity: 0.75;
+  text-shadow: 1px 1px 0 #000;
+}
+
+body.em-abertura #hud,
+body.em-abertura #acoes,
+body.em-abertura #zoom {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.em-abertura #mar {
+  cursor: default;
+}
+
 .hud-topo {
   display: flex;
   align-items: center;

@@ -44,6 +44,7 @@ export class Scene {
     this.onBottleClose = onBottleClose;
     this.lastBottleId = null;
     this.readingBottle = false;
+    this.showDistantLight = false;
     this.hourFn = hourFn;
     this.dateFn = dateFn;
     this.seed = hashString(spec.login || 'ilha');
@@ -323,6 +324,7 @@ export class Scene {
 
     this.backdrop.draw(bg, this.view, clock, hour, palette, dt);
     this.ambience.drawFireworks(bg, this.view);
+    if (this.showDistantLight) this.world.drawDistantLighthouse(bg, palette);
     this.world.drawBack(bg);
     this.drawReflection(bg, palette);
 

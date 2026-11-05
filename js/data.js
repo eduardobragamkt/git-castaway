@@ -27,6 +27,7 @@ export function devOptions(location) {
     date: params.has('data') && !Number.isNaN(date.getTime()) ? date : null,
     weather: params.get('clima'),
     tide: params.has('mare') && Number.isFinite(tide) ? tide : null,
+    intro: params.get('abertura') === '1',
   };
 }
 

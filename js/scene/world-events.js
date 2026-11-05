@@ -438,6 +438,34 @@ export class WorldEvents {
     }
   }
 
+  // Farol distante no horizonte, usado só na abertura.
+  drawDistantLighthouse(g, palette) {
+    const { view } = this.scene;
+    const x = Math.round(330 - view.left);
+    const y = Math.round(-view.top);
+    g.fillStyle = '#26354f';
+    for (let dx = -34; dx <= 34; dx += 1) {
+      const height = Math.round((1 - (dx / 34) ** 2) * 9);
+      g.fillRect(x + dx, y - height, 1, height);
+    }
+    paint(g, x - 2, y - 26, 4, 18, '#d9d4c7');
+    paint(g, x - 2, y - 20, 4, 3, '#d84f3f');
+    paint(g, x - 2, y - 14, 4, 3, '#d84f3f');
+    paint(g, x - 3, y - 30, 6, 4, '#fff2a8');
+    paint(g, x - 2, y - 32, 4, 2, '#d84f3f');
+    const sweep = Math.sin(this.time * 1.4);
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    g.fillStyle = `rgba(255, 240, 170, ${(0.08 + palette.night * 0.16) * Math.abs(sweep)})`;
+    g.beginPath();
+    g.moveTo(x, y - 28);
+    g.lineTo(x - 240 * Math.sign(sweep || 1), y - 44);
+    g.lineTo(x - 240 * Math.sign(sweep || 1), y - 14);
+    g.closePath();
+    g.fill();
+    g.restore();
+  }
+
   // Fica atrás da ilha: céu e horizonte.
   drawBack(g) {
     const { view } = this.scene;

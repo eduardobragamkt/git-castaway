@@ -2,10 +2,21 @@ import { MOTHER_REPO_URL } from './config.js';
 import { daysOnIsland, pendingMilestones } from './calendar.js';
 import { buildIslandSpecs, devOptions, findIslandSpec, forkRedirectUrl, loadData, profileUrl, requestedIsland } from './data.js';
 import { LANGUAGES, TEXTS, initialLanguage } from './i18n.js';
+import {
+  INTRO,
+  canSkipIntro,
+  curtainOpacity,
+  easeInOut,
+  introLines,
+  introTake,
+  shouldPlayIntro,
+  takeProgress,
+  typedText,
+} from './intro.js';
 import { Island } from './island.js';
 import { islandPosition, worldBounds } from './layout.js';
 import { drawOcean } from './ocean.js';
-import { ACTIVITIES } from './scene/activities.js';
+import { ACTIVITIES, introBottle } from './scene/activities.js';
 import { Scene } from './scene/scene.js';
 import { currentHour, paletteAt } from './time.js';
 import { STAR_UPGRADES, nextUpgrade } from './upgrades.js';
@@ -26,6 +37,7 @@ let TEXT = TEXTS[LANGUAGE];
 
 const MILESTONE_CHECK_MS = 5000;
 const MILESTONES_KEY = 'git-castaway:marcos';
+const INTRO_SEEN_KEY = 'git-castaway:abertura-vista';
 const DRAG_THRESHOLD = 5;
 const IDLE_AFTER_MS = 5000;
 const ZOOM_MENU_SPACE = 80;
@@ -46,6 +58,11 @@ const forkButton = document.getElementById('criar-ilha');
 const readMeButton = document.getElementById('leia-me');
 const modalBackdrop = document.getElementById('fundo-modal');
 const modal = document.getElementById('modal');
+const replayButton = document.getElementById('rever-abertura');
+const introOverlay = document.getElementById('abertura');
+const introCurtain = document.getElementById('abertura-cortina');
+const introTerminal = document.getElementById('abertura-terminal');
+const introSkip = document.getElementById('abertura-pular');
 const FULLSCREEN_ICON = 'M1 1h5v2H3v3H1V1zm9 0h5v5h-2V3h-3V1zM1 10h2v3h3v2H1v-5zm12 0h2v5h-5v-2h3v-3z';
 const EXIT_FULLSCREEN_ICON = 'M4 1h2v5H1V4h3V1zm6 0h2v3h3v2h-5V1zM1 10h5v5H4v-3H1v-2zm9 0h5v2h-3v3h-2v-5z';
 
@@ -71,6 +88,9 @@ let modalTrigger = null;
 let cardAnchor = null;
 let transition = null;
 let idleTimer = null;
+let wakePanels = () => {};
+let intro = null;
+let afterIntro = null;
 
 function fit() {
   return fitScale(activeView, window.innerWidth, window.innerHeight, dpr);
@@ -515,6 +535,8 @@ function updateHud() {
 function setupHud() {
   forkButton.addEventListener('click', () => showModal('fork', forkButton));
   readMeButton.addEventListener('click', () => showModal('about', readMeButton));
+  replayButton.hidden = REDUCED_MOTION;
+  replayButton.addEventListener('click', startIntro);
   backButton.addEventListener('click', () => {
     if (activeView === 'scene') {
       startTransition(window.innerWidth / 2, window.innerHeight / 2, () => switchView('map'));
@@ -552,6 +574,11 @@ function applyLanguage() {
   canvas.setAttribute('aria-label', TEXT.canvasLabel);
   forkButton.textContent = TEXT.fork;
   readMeButton.textContent = TEXT.readMe;
+  replayButton.textContent = TEXT.introReplay;
+  replayButton.setAttribute('aria-label', TEXT.introReplayLabel);
+  replayButton.title = TEXT.introReplayLabel;
+  introOverlay.setAttribute('aria-label', TEXT.introLabel);
+  introSkip.textContent = TEXT.introSkip;
   document.getElementById('zoom').setAttribute('aria-label', TEXT.zoomMenu);
   for (const [button, label] of [
     [zoomInButton, TEXT.zoomIn],
@@ -679,6 +706,128 @@ function setupFullscreen() {
   document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
 }
 
+// Abertura: cinco tomadas com o próprio jogo, sempre com dados e céu reais.
+
+function startIntro() {
+  // Sem foco no botão Intro, a barra de espaço pula a abertura em vez de reiniciá-la.
+  document.activeElement?.blur?.();
+  closeCard();
+  stopReading();
+  const main = islands[0].spec;
+  const days = daysOnIsland(main.criadoEm, dateNow()) ?? 1;
+  scene = buildScene(main);
+  scene.showDistantLight = true;
+  const lines = introLines(days, appData.totalForks + 1, TEXT);
+  introTerminal.replaceChildren(
+    ...lines.map((line) => {
+      const row = element('div', 'abertura-linha');
+      row.hidden = true;
+      line.row = row;
+      return row;
+    }),
+  );
+  intro = { time: 0, take: null, lines };
+  introOverlay.hidden = false;
+  document.body.classList.add('em-abertura');
+  zoomOverride.scene = null;
+  activeView = 'scene';
+  cameras.scene = { x: 290, y: -8 };
+  try {
+    localStorage.setItem(INTRO_SEEN_KEY, '1');
+  } catch {
+    // Sem armazenamento, a abertura pode aparecer de novo na próxima visita.
+  }
+}
+
+function renderIntroTerminal() {
+  const { time, lines } = intro;
+  const current = lines.reduce((last, line, index) => (time >= line.at ? index : last), -1);
+  lines.forEach((line, index) => {
+    line.row.hidden = index > current;
+    line.row.textContent = typedText(line, time);
+    line.row.classList.toggle('atual', index === current);
+    line.row.classList.toggle('anterior', index < current);
+  });
+  introCurtain.style.opacity = String(curtainOpacity(time));
+}
+
+function updateIntro(dt) {
+  intro.time += dt;
+  const { time } = intro;
+  if (time >= INTRO.end) {
+    finishIntro(false);
+    return;
+  }
+  const take = introTake(time);
+  const changed = take !== intro.take;
+  intro.take = take;
+  const mapLimits = scaleLimits(fitScale('map', window.innerWidth, window.innerHeight, dpr));
+  const mapFit = fitScale('map', window.innerWidth, window.innerHeight, dpr);
+  const sceneFit = fitScale('scene', window.innerWidth, window.innerHeight, dpr);
+
+  if (take === 'terminal' || take === 'sea') {
+    activeView = 'scene';
+    const u = easeInOut(takeProgress(time, 0, INTRO.bottle));
+    cameras.scene = { x: 300 - u * 110, y: -10 };
+    zoomOverride.scene = sceneFit;
+  } else if (take === 'bottle') {
+    if (changed) {
+      scene.showDistantLight = false;
+      scene.actor.x = 92;
+      scene.actor.y = 48;
+      scene.actor.interrupt(introBottle());
+    }
+    const u = easeInOut(takeProgress(time, INTRO.bottle, INTRO.archipelago));
+    zoomOverride.scene = clampScale(sceneFit * 2, scaleLimits(sceneFit));
+    cameras.scene = { x: 124 - u * 14, y: 12 + u * 6 };
+  } else if (take === 'archipelago') {
+    activeView = 'map';
+    if (changed) cameras.map = { x: islands[0].x, y: islands[0].y - 8 };
+    const u = easeInOut(takeProgress(time, INTRO.archipelago, INTRO.descent));
+    zoomOverride.map = mapLimits.max + (mapLimits.min - mapLimits.max) * u;
+  } else {
+    activeView = 'map';
+    const u = easeInOut(takeProgress(time, INTRO.descent, INTRO.end));
+    zoomOverride.map = mapLimits.min + (mapFit - mapLimits.min) * u;
+  }
+  renderIntroTerminal();
+}
+
+function finishIntro(skipped) {
+  intro = null;
+  introOverlay.hidden = true;
+  document.body.classList.remove('em-abertura');
+  zoomOverride.map = null;
+  zoomOverride.scene = null;
+  scene.showDistantLight = false;
+  cameras.map = { x: islands[0].x, y: islands[0].y - 8 };
+  const main = islands[0].spec;
+  if (islands.length > 1) {
+    switchView('map');
+  } else if (skipped) {
+    switchView('scene', main);
+  } else {
+    switchView('map');
+    startTransition(window.innerWidth / 2, window.innerHeight / 2, () => switchView('scene', main));
+  }
+  wakePanels();
+  const next = afterIntro;
+  afterIntro = null;
+  next?.();
+}
+
+// Qualquer tecla, clique ou toque pula. Pula sem chegar aos controles que estão por baixo.
+function setupIntroSkip() {
+  const skip = (event) => {
+    if (!intro) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (canSkipIntro(intro.time)) finishIntro(true);
+  };
+  window.addEventListener('keydown', skip, { capture: true });
+  window.addEventListener('pointerdown', skip, { capture: true });
+}
+
 // Painéis somem quando ninguém mexe no mouse, deixando só o quadro vivo.
 function setupIdle() {
   const wake = () => {
@@ -689,6 +838,7 @@ function setupIdle() {
     }, IDLE_AFTER_MS);
   };
   ['pointermove', 'pointerdown', 'keydown', 'focusin'].forEach((type) => window.addEventListener(type, wake));
+  wakePanels = wake;
   wake();
 }
 
@@ -710,7 +860,7 @@ function setupKeyboard() {
 
 // Marcos reais do repositório: cada navegador comemora cada um uma vez.
 function deliverMilestone() {
-  if (activeView !== 'scene' || dev.activity || readingAnchor || transition) return false;
+  if (intro || activeView !== 'scene' || dev.activity || readingAnchor || transition) return false;
   let seen = [];
   try {
     seen = JSON.parse(localStorage.getItem(MILESTONES_KEY)) ?? [];
@@ -780,6 +930,7 @@ function frame(now) {
   if (window.innerWidth === 0 || window.innerHeight === 0) return;
   if (canvas.width === 0 || canvas.height === 0) resize();
   ctx.imageSmoothingEnabled = false;
+  if (intro) updateIntro(dt);
 
   if (activeView === 'scene') {
     scene.update(dt);
@@ -832,13 +983,34 @@ async function start() {
   updateMapView();
   resize();
   window.addEventListener('resize', resize);
+  setupIntroSkip();
   setupPointer();
   setupKeyboard();
   setupIdle();
 
-  if (!dev.activity && starsAreNew(startSpec)) {
-    if (startInScene) scene.dropCrate();
-    else islands[0].dropCrate();
+  const dropNewStars = () => {
+    if (dev.activity || !starsAreNew(startSpec)) return;
+    if (scene?.spec.login === startSpec.login) scene.dropCrate();
+    islands[0].dropCrate();
+  };
+  let introSeen = false;
+  try {
+    introSeen = localStorage.getItem(INTRO_SEEN_KEY) === '1';
+  } catch {
+    introSeen = false;
+  }
+  const playIntro = shouldPlayIntro({
+    seen: introSeen,
+    wantedIsland: wantedLogin,
+    reducedMotion: REDUCED_MOTION,
+    forced: dev.intro,
+    testingScene: Boolean(dev.activity || dev.view),
+  });
+  if (playIntro) {
+    afterIntro = dropNewStars;
+    startIntro();
+  } else {
+    dropNewStars();
   }
   window.setInterval(deliverMilestone, MILESTONE_CHECK_MS);
   requestAnimationFrame(frame);

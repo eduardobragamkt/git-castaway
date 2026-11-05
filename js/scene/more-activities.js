@@ -500,6 +500,22 @@ export function* gagSneeze() {
   yield hold('shrug', 0.8);
 }
 
+// Tomada da abertura: a mesma garrafa, sem balão, para o texto do terminal aparecer.
+export function* introBottle() {
+  yield emit('bottleArrive');
+  yield set({ item: null, effect: null, mood: 'surprised', facing: 1 });
+  yield hold('stand', 0.4);
+  yield walk(SCENE_SPOTS.bottle);
+  yield set({ mood: 'calm' });
+  yield hold('bend', 0.5);
+  yield emit('bottlePick');
+  yield set({ item: 'paper', mood: 'focused' });
+  yield hold('read', 1.6);
+  yield set({ item: null, mood: 'happy' });
+  yield hold('stand', 0.4);
+  yield set({ mood: 'calm' });
+}
+
 // A garrafa chega do mar sozinha, com uma mensagem do catálogo.
 export function* bottleFromSea() {
   yield emit('bottleArrive');

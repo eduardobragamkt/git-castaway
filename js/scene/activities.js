@@ -6,7 +6,7 @@ import * as more from './more-activities.js';
 import { SCENE_SPOTS, biteAlert, castLine, cycle, dazed, emit, hold, set, walk } from './script.js';
 
 export { SCENE_SPOTS } from './script.js';
-export { celebrateMilestone } from './more-activities.js';
+export { celebrateMilestone, introBottle } from './more-activities.js';
 
 const ACTIVITY_SHARE_CAP = 0.25;
 const SHARE_WARMUP_SECONDS = 60;
